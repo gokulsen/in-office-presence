@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>In-Office Presence Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f8fc;
+      padding: 30px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #2b6777;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input {
+      padding: 8px;
+      width: 100%;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #2b6777;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .output {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #dceef2;
+      border-left: 4px solid #2b6777;
+    }
+  </style>
+</head>
+<body>
+  <h1>In-Office Presence Calculator</h1>
+  
+  <label for="currentPercentage">Current Office Presence (%)</label>
+  <input type="number" id="currentPercentage" value="8">
+
+  <label for="targetPercentage">Target Presence (%)</label>
+  <input type="number" id="targetPercentage" value="30">
+
+  <label for="totalDays">Total Working Days in the Year</label>
+  <input type="number" id="totalDays" value="260">
+
+  <label for="weeksLeft">Weeks Remaining in the Year</label>
+  <input type="number" id="weeksLeft" value="27">
+
+  <button onclick="calculate()">Calculate</button>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    function calculate() {
+      const current = parseFloat(document.getElementById("currentPercentage").value);
+      const target = parseFloat(document.getElementById("targetPercentage").value);
+      const total = parseInt(document.getElementById("totalDays").value);
+      const weeks = parseInt(document.getElementById("weeksLeft").value);
+
+      const currentDays = Math.round((current / 100) * total);
+      const targetDays = Math.ceil((target / 100) * total);
+      const remainingDays = targetDays - currentDays;
+      const perWeek = (remainingDays / weeks).toFixed(2);
+
+      const result = `
+        <strong>Current Days in Office:</strong> ${currentDays}<br>
+        <strong>Target Days:</strong> ${targetDays}<br>
+        <strong>Days Needed:</strong> ${remainingDays}<br>
+        <strong>Weekly Office Days Needed:</strong> <mark>${perWeek}</mark>
+      `;
+      document.getElementById("result").innerHTML = result;
+    }
+  </script>
+</body>
+</html>

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>In-Office Presence Calculator</title>
   <style>
     body {
@@ -44,18 +44,15 @@
 </head>
 <body>
   <h1>In-Office Presence Calculator</h1>
-  
+
   <label for="currentPercentage">Current Office Presence (%)</label>
-  <input type="number" id="currentPercentage" value="8">
+  <input type="number" id="currentPercentage" value="8" />
 
   <label for="targetPercentage">Target Presence (%)</label>
-  <input type="number" id="targetPercentage" value="30">
+  <input type="number" id="targetPercentage" value="30" />
 
   <label for="totalDays">Total Working Days in the Year</label>
-  <input type="number" id="totalDays" value="260">
-
-  <label for="weeksLeft">Weeks Remaining in the Year</label>
-  <input type="number" id="weeksLeft" value="27">
+  <input type="number" id="totalDays" value="260" />
 
   <button onclick="calculate()">Calculate</button>
 
@@ -66,19 +63,37 @@
       const current = parseFloat(document.getElementById("currentPercentage").value);
       const target = parseFloat(document.getElementById("targetPercentage").value);
       const total = parseInt(document.getElementById("totalDays").value);
-      const weeks = parseInt(document.getElementById("weeksLeft").value);
+
+      // Calculate today's date and end of year
+      const today = new Date();
+      const endOfYear = new Date(today.getFullYear(), 11, 31); // Dec 31
+      const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
+
+      // Calculate remaining full weeks
+      const timeDiff = endOfYear - today;
+      const weeksRemaining = Math.ceil(timeDiff / millisecondsPerWeek);
 
       const currentDays = Math.round((current / 100) * total);
       const targetDays = Math.ceil((target / 100) * total);
       const remainingDays = targetDays - currentDays;
-      const perWeek = (remainingDays / weeks).toFixed(2);
+
+      let perWeekText;
+      if (remainingDays <= 0) {
+        perWeekText = `<mark>Target already achieved!</mark>`;
+      } else {
+        const perWeek = (remainingDays / weeksRemaining).toFixed(2);
+        perWeekText = `<mark>${perWeek} days/week</mark>`;
+      }
 
       const result = `
-        <strong>Current Days in Office:</strong> ${currentDays}<br>
-        <strong>Target Days:</strong> ${targetDays}<br>
-        <strong>Days Needed:</strong> ${remainingDays}<br>
-        <strong>Weekly Office Days Needed:</strong> <mark>${perWeek}</mark>
+        <strong>Today's Date:</strong> ${today.toDateString()}<br>
+        <strong>Weeks Remaining in ${today.getFullYear()}:</strong> ${weeksRemaining}<br><br>
+        <strong>Current Office Days:</strong> ${currentDays}<br>
+        <strong>Target Office Days:</strong> ${targetDays}<br>
+        <strong>Remaining Days Needed:</strong> ${remainingDays > 0 ? remainingDays : 0}<br><br>
+        <strong>Required Weekly Office Days:</strong> ${perWeekText}
       `;
+
       document.getElementById("result").innerHTML = result;
     }
   </script>

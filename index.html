@@ -2,61 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>In-Office Presence Calculator</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f8fc;
-      padding: 30px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0f7fa, #fffde7);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
       max-width: 600px;
-      margin: auto;
+      width: 90%;
+      margin-top: 60px;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     }
     h1 {
       text-align: center;
-      color: #2b6777;
+      color: #00796b;
+      margin-bottom: 25px;
     }
     label {
       display: block;
-      margin-top: 15px;
-      font-weight: bold;
+      margin: 15px 0 5px;
+      font-weight: 600;
+      color: #333;
     }
     input {
-      padding: 8px;
       width: 100%;
-      margin-top: 5px;
+      padding: 10px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
     }
     button {
-      margin-top: 20px;
-      padding: 10px 15px;
-      background-color: #2b6777;
+      margin-top: 25px;
+      width: 100%;
+      padding: 12px;
+      background-color: #00796b;
       color: white;
       border: none;
+      font-size: 16px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #004d40;
     }
     .output {
-      margin-top: 25px;
-      padding: 15px;
-      background-color: #dceef2;
-      border-left: 4px solid #2b6777;
+      margin-top: 30px;
+      background-color: #e0f2f1;
+      padding: 20px;
+      border-left: 5px solid #00796b;
+      border-radius: 8px;
+      color: #004d40;
+    }
+    mark {
+      background-color: #a7ffeb;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin-top: 40px;
+        padding: 20px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>In-Office Presence Calculator</h1>
+  <div class="container">
+    <h1>In-Office Presence Calculator</h1>
 
-  <label for="currentPercentage">Current Office Presence (%)</label>
-  <input type="number" id="currentPercentage" value="8" />
+    <label for="currentPercentage">Current Office Presence (%)</label>
+    <input type="number" id="currentPercentage" value="8" />
 
-  <label for="targetPercentage">Target Presence (%)</label>
-  <input type="number" id="targetPercentage" value="30" />
+    <label for="targetPercentage">Target Presence (%)</label>
+    <input type="number" id="targetPercentage" value="30" />
 
-  <label for="totalDays">Total Working Days in the Year</label>
-  <input type="number" id="totalDays" value="260" />
+    <label for="totalDays">Total Working Days in the Year</label>
+    <input type="number" id="totalDays" value="260" />
 
-  <button onclick="calculate()">Calculate</button>
+    <button onclick="calculate()">Calculate</button>
 
-  <div class="output" id="result"></div>
+    <div class="output" id="result"></div>
+  </div>
 
   <script>
     function calculate() {
@@ -64,12 +104,9 @@
       const target = parseFloat(document.getElementById("targetPercentage").value);
       const total = parseInt(document.getElementById("totalDays").value);
 
-      // Calculate today's date and end of year
       const today = new Date();
-      const endOfYear = new Date(today.getFullYear(), 11, 31); // Dec 31
+      const endOfYear = new Date(today.getFullYear(), 11, 31);
       const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
-
-      // Calculate remaining full weeks
       const timeDiff = endOfYear - today;
       const weeksRemaining = Math.ceil(timeDiff / millisecondsPerWeek);
 

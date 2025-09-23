@@ -1,40 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>In-Office Presence Calculator</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #f0f8ff, #fffde7);
       margin: 0;
       padding: 0;
-      background: linear-gradient(to right, #e0f7fa, #fffde7);
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
     }
     .container {
-      background: white;
-      max-width: 600px;
+      background: #fff;
+      max-width: 700px;
       width: 90%;
-      margin-top: 60px;
+      margin-top: 50px;
       padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
-      color: #00796b;
-      margin-bottom: 25px;
+      color: #00695c;
+      margin-bottom: 20px;
     }
     label {
+      font-weight: bold;
       display: block;
       margin: 15px 0 5px;
-      font-weight: 600;
-      color: #333;
     }
     input {
       width: 100%;
@@ -43,53 +41,51 @@
       border-radius: 8px;
     }
     button {
-      margin-top: 25px;
+      margin-top: 20px;
       width: 100%;
       padding: 12px;
-      background-color: #00796b;
-      color: white;
+      background-color: #00695c;
+      color: #fff;
       border: none;
-      font-size: 16px;
       border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
-      transition: background 0.3s ease;
     }
     button:hover {
       background-color: #004d40;
     }
     .output {
-      margin-top: 30px;
-      background-color: #e0f2f1;
+      margin-top: 25px;
       padding: 20px;
-      border-left: 5px solid #00796b;
       border-radius: 8px;
-      color: #004d40;
+      background: #e0f2f1;
+      border-left: 5px solid #00695c;
     }
     mark {
-      background-color: #a7ffeb;
       padding: 2px 6px;
       border-radius: 4px;
+      font-weight: bold;
     }
-    @media (max-width: 600px) {
-      .container { margin-top: 40px; padding: 20px; }
-    }
+    .high { background: #c8e6c9; color: #256029; }
+    .medium { background: #ffe0b2; color: #e65100; }
+    .low { background: #ffcdd2; color: #b71c1c; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>In-Office Presence Calculator</h1>
 
-    <label for="currentPercentage">Current Office Presence (%)</label>
-    <input type="number" id="currentPercentage" value="8" />
+    <label for="currentPercentage">Current Presence (%)</label>
+    <input type="number" id="currentPercentage" value="18.2" />
 
     <label for="targetPercentage">Target Presence (%)</label>
     <input type="number" id="targetPercentage" value="30" />
 
-    <label for="totalDays">Total Working Days in the Year</label>
-    <input type="number" id="totalDays" value="260" />
+    <label for="deadline">Deadline Date</label>
+    <input type="date" id="deadline" value="2025-11-30" />
 
-    <label for="plannedDays">How many days/week do you plan to work in office?</label>
-    <input type="number" id="plannedDays" value="3" min="0" max="5" />
+    <label for="plannedDays">Planned Office Days per Week</label>
+    <input type="number" id="plannedDays" min="0" max="5" value="3" />
 
     <button onclick="calculate()">Calculate</button>
 
@@ -97,51 +93,58 @@
   </div>
 
   <script>
+    function getCategoryHTML(percent) {
+      if (percent >= 60) {
+        return `<mark class="high">${percent.toFixed(2)}%</mark> → Employee in office for at least 3 days/week`;
+      } else if (percent >= 20) {
+        return `<mark class="medium">${percent.toFixed(2)}%</mark> → Employee in office for 1 or 2 days/week`;
+      } else {
+        return `<mark class="low">${percent.toFixed(2)}%</mark> → Employee not in office at least once a week`;
+      }
+    }
+
     function calculate() {
       const current = parseFloat(document.getElementById("currentPercentage").value);
       const target = parseFloat(document.getElementById("targetPercentage").value);
-      const total = parseInt(document.getElementById("totalDays").value);
-      const plannedDaysPerWeek = parseFloat(document.getElementById("plannedDays").value);
+      const deadline = new Date(document.getElementById("deadline").value);
+      const plannedDays = parseInt(document.getElementById("plannedDays").value);
 
       const today = new Date();
-      const endOfYear = new Date(today.getFullYear(), 11, 31);
-      const weeksRemaining = Math.ceil((endOfYear - today) / (7 * 24 * 60 * 60 * 1000));
 
-      const currentDays = Math.round((current / 100) * total);
-      const targetDays = Math.ceil((target / 100) * total);
-      const remainingDays = targetDays - currentDays;
+      // Weekly % scale
+      const plannedWeeklyPercent = plannedDays * 20; // 1 day = 20%
 
-      let perWeekText;
-      if (remainingDays <= 0) {
-        perWeekText = `<mark>Target already achieved!</mark>`;
-      } else {
-        const perWeek = (remainingDays / weeksRemaining).toFixed(2);
-        perWeekText = `<mark>${perWeek} days/week</mark>`;
-      }
+      // Weeks passed since Jan 1
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const daysPassed = Math.floor((today - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+      const weeksPassed = daysPassed / 7;
 
-      // User-defined planned days/week calculation
-      const futureOfficeDays = Math.round(plannedDaysPerWeek * weeksRemaining);
-      const projectedTotal = currentDays + futureOfficeDays;
-      const finalPercent = ((projectedTotal / total) * 100).toFixed(2);
-      const targetStatus = finalPercent >= target ? "✅ Meets target!" : "⚠️ Below target";
+      // Weeks remaining until deadline
+      const daysRemaining = Math.floor((deadline - today) / (1000 * 60 * 60 * 24));
+      const weeksRemaining = daysRemaining / 7;
 
-      const result = `
-        <strong>Today's Date:</strong> ${today.toDateString()}<br>
-        <strong>Weeks Remaining:</strong> ${weeksRemaining}<br><br>
+      // Weighted average presence
+      const numerator = (weeksPassed * current) + (weeksRemaining * plannedWeeklyPercent);
+      const denominator = weeksPassed + weeksRemaining;
+      const finalPercent = numerator / denominator;
 
-        <strong>Current Office Days:</strong> ${currentDays}<br>
-        <strong>Target Office Days:</strong> ${targetDays}<br>
-        <strong>Remaining Days Needed:</strong> ${remainingDays > 0 ? remainingDays : 0}<br>
-        <strong>Required Weekly Office Days:</strong> ${perWeekText}<br><br>
+      // What % needed in future weeks to hit target
+      const neededFuture = (((denominator * target) - (weeksPassed * current)) / weeksRemaining);
+      const neededDays = (neededFuture / 20).toFixed(2);
 
-        <u><strong>🧮 Based on Your Plan:</strong></u><br>
-        Planned Office Days/Week: <strong>${plannedDaysPerWeek}</strong><br>
-        Expected Future Days: <strong>${futureOfficeDays}</strong><br>
-        Projected Total Days: <strong>${projectedTotal}</strong><br>
-        Final Presence: <mark>${finalPercent}%</mark> → ${targetStatus}
+      document.getElementById("result").innerHTML = `
+        <strong>Today:</strong> ${today.toDateString()}<br>
+        <strong>Deadline:</strong> ${deadline.toDateString()}<br>
+        <strong>Weeks Passed:</strong> ${weeksPassed.toFixed(1)}<br>
+        <strong>Weeks Remaining:</strong> ${weeksRemaining.toFixed(1)}<br><br>
+
+        <strong>Current Presence:</strong> ${current}%<br>
+        <strong>Planned Weekly Presence:</strong> ${plannedWeeklyPercent}% (${plannedDays} days/week)<br>
+        <strong>Final Presence by Deadline:</strong> ${getCategoryHTML(finalPercent)}<br><br>
+
+        <u><strong>To Reach ${target}% by Deadline:</strong></u><br>
+        You would need ~<mark>${neededFuture.toFixed(2)}%</mark> weekly presence → about <mark>${neededDays} days/week</mark>.
       `;
-
-      document.getElementById("result").innerHTML = result;
     }
   </script>
 </body>

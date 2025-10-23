@@ -91,7 +91,7 @@ document.getElementById("supabaseScript").addEventListener("load", async () => {
   const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
 
-  const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   console.log("✅ Supabase client ready", supabase);
 
   /**************  DOM ELEMENTS  **************/

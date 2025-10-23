@@ -3,22 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>In-Office Presence Tracker (Secure)</title>
+<title>In-Office Presence Tracker (Supabase Secure)</title>
 
 <style>
-  body { font-family: "Segoe UI", sans-serif; background:#f7faff; color:#222; margin:0; padding:20px; }
-  h1 { text-align:center; color:#0057b7; }
-  #auth { text-align:center; margin:20px auto; }
-  #auth input { margin:5px; padding:6px; border-radius:6px; border:1px solid #ccc; }
-  #auth button { background:#0057b7; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
-  #controls { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:20px 0; }
-  #controls label,#controls input,#controls button{
-    flex:1 1 150px; min-width:120px; padding:6px; border-radius:6px; border:1px solid #ccc; font-size:1em;
-  }
-  #controls button { background:#0057b7; color:white; }
-  #summary{background:#fff;border-left:6px solid #0057b7;padding:20px;margin:20px auto;width:95%;
+  body { font-family:"Segoe UI",sans-serif;background:#f7faff;color:#222;margin:0;padding:20px; }
+  h1{text-align:center;color:#0057b7;}
+  #auth{text-align:center;margin:20px auto;}
+  #auth input{margin:5px;padding:6px;border-radius:6px;border:1px solid #ccc;}
+  #auth button{background:#0057b7;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;}
+  #controls{display:none;flex-wrap:wrap;justify-content:center;gap:10px;margin:20px 0;}
+  #controls label,#controls input,#controls button{flex:1 1 150px;min-width:120px;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:1em;}
+  #controls button{background:#0057b7;color:white;}
+  #summary{display:none;background:#fff;border-left:6px solid #0057b7;padding:20px;margin:20px auto;width:95%;
             border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-  .table-container{overflow-x:auto;width:100%;}
+  .table-container{display:none;overflow-x:auto;width:100%;}
   table{width:100%;border-collapse:collapse;margin-top:20px;min-width:900px;}
   th,td{border:1px solid #ddd;text-align:center;padding:10px;}
   th{background:#0057b7;color:white;}
@@ -33,7 +31,7 @@
 
 <h1>🏢 In-Office Presence Tracker (Secure)</h1>
 
-<!-- Auth -->
+<!-- Authentication -->
 <div id="auth">
   <div id="loginForm">
     <input type="email" id="email" placeholder="Email" />
@@ -47,7 +45,7 @@
 </div>
 
 <!-- Controls -->
-<div id="controls" style="display:none;">
+<div id="controls">
   <label for="deadline">Deadline:</label>
   <input type="date" id="deadline" value="2025-12-26" />
   <label for="target">Target %:</label>
@@ -56,128 +54,132 @@
 </div>
 
 <!-- Summary -->
-<div id="summary" style="display:none;">
+<div id="summary">
   <h2>📊 Summary (Live)</h2>
-  <p>Current In-Office Days: <span id="summaryDays">0</span></p>
-  <p>Current Presence: <span id="summaryPercent">0%</span></p>
-  <p>Target Presence: <span id="targetPercent">30%</span></p>
-  <p>Required Days (to reach target): <span id="requiredDays">0</span></p>
-  <p>Suggested Days / Week: <span id="suggestedDaysWeek">0</span></p>
+  <p>Current Days: <span id="summaryDays">0</span></p>
+  <p>Current %: <span id="summaryPercent">0%</span></p>
+  <p>Target %: <span id="targetPercent">30%</span></p>
+  <p>Needed Days: <span id="requiredDays">0</span></p>
+  <p>Suggested Days/Week: <span id="suggestedDaysWeek">0</span></p>
 </div>
 
 <!-- Table -->
-<div class="table-container" style="display:none;">
+<div class="table-container">
   <table id="presenceTable">
     <thead>
       <tr>
         <th>Week Start</th><th>Week End</th><th>Office Days</th><th>Working Days</th>
-        <th>Leave/Holiday Days</th><th>Weekly %</th><th>Cumulative Days</th><th>Cumulative %</th><th>Action</th>
+        <th>Leave/Holiday</th><th>Weekly %</th><th>Cumulative Days</th><th>Cumulative %</th><th>Action</th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
   </table>
 </div>
 
-<!-- Load Supabase then run code -->
-<script id="supabaseScript"
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
-</script>
+<!-- Load Supabase library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
-document.getElementById("supabaseScript").addEventListener("load", async () => {
+/* ============= Supabase Setup ============= */
+window.addEventListener("load", () => {
+  if (!window.Supabase) { alert("❌ Supabase failed to load"); return; }
 
-  /**************  SUPABASE SETUP  **************/
   const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
   const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
 
+  // ✅ Create global Supabase client
   window.supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log("✅ Supabase client ready", supabase);
+  console.log("✅ Supabase client ready", window.supabase);
 
-  /**************  DOM ELEMENTS  **************/
+  initApp(); // Start app logic
+});
+
+/* ============= App Logic ============= */
+function initApp() {
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const tableBody = document.getElementById("tableBody");
   const totalDays = 260;
-  let cumulativeOfficeDays = 56.68;
   const today = new Date("2025-10-20");
 
-  /**************  LOGIN / SIGNUP  **************/
+  /* ---- Login / Signup ---- */
   loginBtn.onclick = async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
-    if (!email || !password) return alert("Enter both email and password.");
+    if (!email || !password) return alert("Enter both email and password");
 
     const { data: loginData, error: loginError } =
       await supabase.auth.signInWithPassword({ email, password });
 
-    console.log("Login result:", loginData, loginError);
+    console.log("Login attempt:", loginData, loginError);
 
     if (loginError && loginError.message.includes("Invalid")) {
-      alert("Invalid credentials – check email confirmation or password.");
+      alert("Invalid credentials or unconfirmed email");
       return;
     }
-
     if (loginError) {
-      // Attempt signup if login fails
       const { error: signupError } = await supabase.auth.signUp({ email, password });
-      if (signupError) return alert("Error: " + signupError.message);
-      alert("Signup successful! Check email for confirmation before logging in.");
+      if (signupError) return alert("Signup error: " + signupError.message);
+      alert("Signup success! Confirm email before logging in.");
       return;
     }
 
+    // Wait a bit for session to be created
     setTimeout(async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       console.log("Session after login:", sessionData);
       if (sessionData?.session) showApp();
-      else alert("Login successful but session not ready – refresh page after confirmation.");
-    }, 600);
+      else alert("Login successful but session not active yet. Refresh after confirmation.");
+    }, 800);
   };
 
-  logoutBtn.onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+  logoutBtn.onclick = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+  };
 
-  /**************  APP UI  **************/
+  /* ---- Show App ---- */
   async function showApp() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return alert("Please log in first.");
+    if (!user) return alert("Please login first");
 
-    document.getElementById("loginForm").style.display = "none";
-    document.getElementById("logoutForm").style.display = "block";
-    document.getElementById("controls").style.display = "flex";
-    document.getElementById("summary").style.display = "block";
-    document.querySelector(".table-container").style.display = "block";
-    document.getElementById("userEmail").textContent = user.email;
-    document.body.style.borderTop = "5px solid green";
+    document.getElementById("loginForm").style.display="none";
+    document.getElementById("logoutForm").style.display="block";
+    document.getElementById("controls").style.display="flex";
+    document.getElementById("summary").style.display="block";
+    document.querySelector(".table-container").style.display="block";
+    document.getElementById("userEmail").textContent=user.email;
+    document.body.style.borderTop="5px solid green";
 
     generateTable();
   }
 
+  /* ---- Table and Calculations ---- */
   async function generateTable() {
-    tableBody.innerHTML = "";
+    tableBody.innerHTML="";
     const deadline = new Date(document.getElementById("deadline").value);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data: dbData, error } = await supabase.from("office_presence")
+    const { data: dbData } = await supabase.from("office_presence")
       .select("*").eq("user_id", user.id).order("week_start");
-    if (error) console.error("DB error:", error);
 
-    dbData?.forEach(row =>
-      addRow(new Date(row.week_start), new Date(row.week_end),
-        row.office_days, row.working_days, 0, true));
+    dbData?.forEach(row=>addRow(new Date(row.week_start),new Date(row.week_end),
+      row.office_days,row.working_days,0,true));
 
     let start = new Date(today);
-    while (start <= deadline) {
-      const end = new Date(start); end.setDate(start.getDate() + 4);
-      addRow(start, end);
-      start.setDate(start.getDate() + 7);
+    while(start <= deadline){
+      const end=new Date(start);end.setDate(start.getDate()+4);
+      addRow(start,end);
+      start.setDate(start.getDate()+7);
     }
     recalculate();
   }
 
-  function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = "", isSaved = false) {
-    const row = document.createElement("tr");
-    row.innerHTML = `
+  function addRow(weekStart,weekEnd,officeDays="",workDays="",leaveDays="",isSaved=false){
+    const row=document.createElement("tr");
+    row.innerHTML=`
       <td>${formatDate(weekStart)}</td>
       <td>${formatDate(weekEnd)}</td>
       <td><input type="number" step="0.1" value="${officeDays}"></td>
@@ -189,22 +191,22 @@ document.getElementById("supabaseScript").addEventListener("load", async () => {
       <td><button>${isSaved?"Update":"Add"}</button></td>`;
     tableBody.appendChild(row);
 
-    row.querySelector("button").addEventListener("click", async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const weekStartStr = row.cells[0].textContent;
-      const weekEndStr = row.cells[1].textContent;
-      const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value) || 0;
-      const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value) || 0;
+    row.querySelector("button").addEventListener("click",async()=>{
+      const { data:{user} } = await supabase.auth.getUser();
+      const weekStartStr=row.cells[0].textContent;
+      const weekEndStr=row.cells[1].textContent;
+      const officeDaysVal=parseFloat(row.cells[2].querySelector("input").value)||0;
+      const workingDaysVal=parseFloat(row.cells[3].querySelector("input").value)||0;
       const { error } = await supabase.from("office_presence").upsert([{
-        week_start: weekStartStr, week_end: weekEndStr,
-        office_days: officeDaysVal, working_days: workingDaysVal, user_id: user.id
+        week_start:weekStartStr,week_end:weekEndStr,
+        office_days:officeDaysVal,working_days:workingDaysVal,user_id:user.id
       }]);
-      if (error) return alert("Save error: "+error.message);
+      if(error) return alert("DB error: "+error.message);
       row.querySelector("button").textContent="Update";
       recalcRow(row);
     });
 
-    row.querySelectorAll("input").forEach(inp => inp.addEventListener("input",()=>recalcRow(row)));
+    row.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>recalcRow(row)));
     recalcRow(row);
   }
 
@@ -246,7 +248,7 @@ document.getElementById("supabaseScript").addEventListener("load", async () => {
 
   function formatDate(d){return d.toISOString().split("T")[0];}
 
-  /**************  SESSION LISTENERS  **************/
+  /* ---- Listen to session changes ---- */
   supabase.auth.getSession().then(({data})=>{
     if(data.session){console.log("Existing session found");showApp();}
   });
@@ -256,7 +258,7 @@ document.getElementById("supabaseScript").addEventListener("load", async () => {
   });
 
   document.getElementById("generateBtn").addEventListener("click",generateTable);
-});
+}
 </script>
 </body>
 </html>

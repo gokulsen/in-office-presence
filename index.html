@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>In-Office Presence Tracker (Secure)</title>
+
 <style>
   body { font-family: 'Segoe UI', sans-serif; background:#f7faff; color:#222; margin:0; padding:20px; }
   h1 { text-align:center; color:#0057b7; }
@@ -92,171 +93,164 @@
   </table>
 </div>
 
-<!-- Load Supabase first -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+<!-- ✅ Load Supabase properly before code -->
+<script id="supabaseScript"
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+</script>
+
 <script>
-  /* ---------- Supabase Setup ---------- */
+document.getElementById("supabaseScript").addEventListener("load", async () => {
+  console.log("✅ Supabase library loaded!");
+
   const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
 
-  // ✅ Use window.Supabase (capital S)
   const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("✅ Supabase client initialized", supabase);
 
-  console.log("Supabase initialized successfully ✅", supabase);
+  const tableBody = document.getElementById("tableBody");
+  const totalDays = 260;
+  let cumulativeOfficeDays = 56.68;
+  const today = new Date("2025-10-20");
 
-/* ---------- Variables ---------- */
-const tableBody = document.getElementById("tableBody");
-const totalDays = 260;
-let cumulativeOfficeDays = 56.68;
-const today = new Date("2025-10-20");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-/* ---------- Authentication ---------- */
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
+  loginBtn.onclick = async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    if (!email || !password) return alert("Enter both email and password.");
 
-loginBtn.onclick = async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  if (!email || !password) return alert("Enter both email and password.");
+    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    if (loginError) {
+      const { error: signupError } = await supabase.auth.signUp({ email, password });
+      if (signupError) return alert("Error: " + signupError.message);
+      alert("Signup successful! Please check your email and confirm, then login again.");
+      return;
+    }
+    setTimeout(async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) showApp();
+      else alert("Login successful, but session not ready. Try refreshing.");
+    }, 600);
+  };
 
-  const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-  if (loginError) {
-    const { error: signupError } = await supabase.auth.signUp({ email, password });
-    if (signupError) return alert("Error: " + signupError.message);
-    alert("Signup successful! Please check your email and confirm, then login again.");
-    return;
-  }
+  logoutBtn.onclick = async () => { await supabase.auth.signOut(); location.reload(); };
 
-  // Wait for session, then load UI
-  setTimeout(async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) showApp();
-    else alert("Login successful, but session not ready. Try refreshing the page.");
-  }, 500);
-};
-
-logoutBtn.onclick = async () => {
-  await supabase.auth.signOut();
-  location.reload();
-};
-
-/* ---------- Show App After Login ---------- */
-async function showApp() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return alert("Please log in first.");
-
-  document.getElementById("loginForm").style.display = "none";
-  document.getElementById("logoutForm").style.display = "block";
-  document.getElementById("controls").style.display = "flex";
-  document.getElementById("summary").style.display = "block";
-  document.querySelector(".table-container").style.display = "block";
-  document.getElementById("userEmail").textContent = user.email;
-
-  generateTable();
-}
-
-/* ---------- Generate Table ---------- */
-async function generateTable() {
-  tableBody.innerHTML = "";
-  const deadline = new Date(document.getElementById("deadline").value);
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const { data: dbData } = await supabase.from("office_presence").select("*").eq("user_id", user.id).order("week_start");
-  dbData?.forEach(row => addRow(new Date(row.week_start), new Date(row.week_end), row.office_days, row.working_days, 0, true));
-
-  let start = new Date(today);
-  while (start <= deadline) {
-    const end = new Date(start);
-    end.setDate(start.getDate() + 4);
-    addRow(start, end);
-    start.setDate(start.getDate() + 7);
-  }
-
-  recalculate();
-}
-
-/* ---------- Add Row ---------- */
-function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = "", isSaved = false) {
-  const row = document.createElement("tr");
-  row.innerHTML = `
-    <td>${formatDate(weekStart)}</td>
-    <td>${formatDate(weekEnd)}</td>
-    <td><input type="number" step="0.1" value="${officeDays}"></td>
-    <td><input type="number" step="0.1" value="${workDays}"></td>
-    <td><input type="number" step="0.1" value="${leaveDays}"></td>
-    <td class="weekly"></td>
-    <td class="cumulativeDays"></td>
-    <td class="cumulativePercent"></td>
-    <td><button>${isSaved ? "Update" : "Add"}</button></td>
-  `;
-  tableBody.appendChild(row);
-
-  row.querySelector("button").addEventListener("click", async () => {
+  async function showApp() {
     const { data: { user } } = await supabase.auth.getUser();
-    const weekStartStr = row.cells[0].textContent;
-    const weekEndStr = row.cells[1].textContent;
-    const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value) || 0;
-    const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value) || 0;
+    if (!user) return alert("Please log in first.");
 
-    const { error } = await supabase.from("office_presence").upsert([
-      { week_start: weekStartStr, week_end: weekEndStr, office_days: officeDaysVal, working_days: workingDaysVal, user_id: user.id }
-    ]);
-    if (error) return alert("Error saving row: " + error.message);
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("logoutForm").style.display = "block";
+    document.getElementById("controls").style.display = "flex";
+    document.getElementById("summary").style.display = "block";
+    document.querySelector(".table-container").style.display = "block";
+    document.getElementById("userEmail").textContent = user.email;
 
-    row.querySelector("button").textContent = "Update";
+    generateTable();
+  }
+
+  async function generateTable() {
+    tableBody.innerHTML = "";
+    const deadline = new Date(document.getElementById("deadline").value);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: dbData } = await supabase.from("office_presence")
+      .select("*").eq("user_id", user.id).order("week_start");
+
+    dbData?.forEach(row => addRow(new Date(row.week_start), new Date(row.week_end),
+      row.office_days, row.working_days, 0, true));
+
+    let start = new Date(today);
+    while (start <= deadline) {
+      const end = new Date(start);
+      end.setDate(start.getDate() + 4);
+      addRow(start, end);
+      start.setDate(start.getDate() + 7);
+    }
+    recalculate();
+  }
+
+  function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = "", isSaved = false) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${formatDate(weekStart)}</td>
+      <td>${formatDate(weekEnd)}</td>
+      <td><input type="number" step="0.1" value="${officeDays}"></td>
+      <td><input type="number" step="0.1" value="${workDays}"></td>
+      <td><input type="number" step="0.1" value="${leaveDays}"></td>
+      <td class="weekly"></td>
+      <td class="cumulativeDays"></td>
+      <td class="cumulativePercent"></td>
+      <td><button>${isSaved ? "Update" : "Add"}</button></td>
+    `;
+    tableBody.appendChild(row);
+
+    row.querySelector("button").addEventListener("click", async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const weekStartStr = row.cells[0].textContent;
+      const weekEndStr = row.cells[1].textContent;
+      const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value) || 0;
+      const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value) || 0;
+
+      const { error } = await supabase.from("office_presence").upsert([
+        { week_start: weekStartStr, week_end: weekEndStr,
+          office_days: officeDaysVal, working_days: workingDaysVal, user_id: user.id }
+      ]);
+      if (error) return alert("Error saving row: " + error.message);
+
+      row.querySelector("button").textContent = "Update";
+      recalcRow(row);
+    });
+
+    row.querySelectorAll("input").forEach(input => input.addEventListener("input", () => recalcRow(row)));
     recalcRow(row);
-  });
+  }
 
-  row.querySelectorAll("input").forEach(input => input.addEventListener("input", () => recalcRow(row)));
-  recalcRow(row);
-}
-
-/* ---------- Recalculate ---------- */
-function recalcRow(row) {
-  const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
-  const work = parseFloat(row.cells[3].querySelector("input").value) || 0;
-  const weeklyCell = row.cells[5];
-  const weekly = work ? (office / work) * 100 : 0;
-  weeklyCell.className = weekly >= 60 ? "high" : weekly >= 20 ? "medium" : "low";
-  weeklyCell.textContent = weekly ? weekly.toFixed(1) + "%" : "";
-  recalculate();
-}
-
-function recalculate() {
-  const rows = document.querySelectorAll("#presenceTable tbody tr");
-  let cumulative = 56.68;
-  rows.forEach((row, i) => {
+  function recalcRow(row) {
     const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
-    if (i > 0) cumulative += office;
-    row.cells[6].textContent = cumulative.toFixed(2);
-    row.cells[7].textContent = ((cumulative / totalDays) * 100).toFixed(2) + "%";
-  });
-  updateSummary(cumulative);
-}
+    const work = parseFloat(row.cells[3].querySelector("input").value) || 0;
+    const weeklyCell = row.cells[5];
+    const weekly = work ? (office / work) * 100 : 0;
+    weeklyCell.className = weekly >= 60 ? "high" : weekly >= 20 ? "medium" : "low";
+    weeklyCell.textContent = weekly ? weekly.toFixed(1) + "%" : "";
+    recalculate();
+  }
 
-function updateSummary(cumulative) {
-  const deadline = new Date(document.getElementById("deadline").value);
-  const targetPercent = parseFloat(document.getElementById("target").value);
-  const currentPercent = (cumulative / totalDays) * 100;
-  const targetDays = (targetPercent / 100) * totalDays;
-  const needed = Math.max(0, targetDays - cumulative);
-  const diffWeeks = Math.ceil((deadline - today) / (7 * 24 * 60 * 60 * 1000));
-  const daysPerWeek = needed / diffWeeks;
-  document.getElementById("summaryDays").textContent = cumulative.toFixed(2);
-  document.getElementById("summaryPercent").textContent = currentPercent.toFixed(2) + "%";
-  document.getElementById("requiredDays").textContent = needed.toFixed(1);
-  document.getElementById("suggestedDaysWeek").textContent = daysPerWeek.toFixed(2);
-}
+  function recalculate() {
+    const rows = document.querySelectorAll("#presenceTable tbody tr");
+    let cumulative = 56.68;
+    rows.forEach((row, i) => {
+      const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
+      if (i > 0) cumulative += office;
+      row.cells[6].textContent = cumulative.toFixed(2);
+      row.cells[7].textContent = ((cumulative / totalDays) * 100).toFixed(2) + "%";
+    });
+    updateSummary(cumulative);
+  }
 
-function formatDate(date){return date.toISOString().split("T")[0];}
+  function updateSummary(cumulative) {
+    const deadline = new Date(document.getElementById("deadline").value);
+    const targetPercent = parseFloat(document.getElementById("target").value);
+    const currentPercent = (cumulative / totalDays) * 100;
+    const targetDays = (targetPercent / 100) * totalDays;
+    const needed = Math.max(0, targetDays - cumulative);
+    const diffWeeks = Math.ceil((deadline - today) / (7 * 24 * 60 * 60 * 1000));
+    const daysPerWeek = needed / diffWeeks;
+    document.getElementById("summaryDays").textContent = cumulative.toFixed(2);
+    document.getElementById("summaryPercent").textContent = currentPercent.toFixed(2) + "%";
+    document.getElementById("requiredDays").textContent = needed.toFixed(1);
+    document.getElementById("suggestedDaysWeek").textContent = daysPerWeek.toFixed(2);
+  }
 
-/* ---------- Session Handling ---------- */
-supabase.auth.getSession().then(({ data }) => { if (data.session) showApp(); });
-supabase.auth.onAuthStateChange((_event, session) => { if (session) showApp(); });
+  function formatDate(date){return date.toISOString().split("T")[0];}
 
-/* ---------- Generate Button ---------- */
-document.getElementById("generateBtn").addEventListener("click", generateTable);
+  supabase.auth.getSession().then(({ data }) => { if (data.session) showApp(); });
+  supabase.auth.onAuthStateChange((_event, session) => { if (session) showApp(); });
+  document.getElementById("generateBtn").addEventListener("click", generateTable);
+});
 </script>
 </body>
 </html>

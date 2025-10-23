@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>In-Office Presence Tracker (Secure)</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background: #f7faff; color: #222; padding: 20px; margin:0;}
-  h1 { text-align: center; color: #0057b7; }
-  
-  /* Auth container */
-  #auth { text-align: center; margin: 20px auto; }
-  #auth input { margin: 5px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; }
+  body { font-family: 'Segoe UI', sans-serif; background:#f7faff; color:#222; margin:0; padding:20px; }
+  h1 { text-align:center; color:#0057b7; }
+
+  /* Auth */
+  #auth { text-align:center; margin:20px auto; }
+  #auth input { margin:5px; padding:6px; border-radius:6px; border:1px solid #ccc; }
   #auth button { background:#0057b7; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
 
   /* Controls */
-  #controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
+  #controls { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:20px 0; }
   #controls label, #controls input, #controls button {
-    flex: 1 1 150px; min-width: 120px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em;
+    flex:1 1 150px; min-width:120px; padding:6px; border-radius:6px; border:1px solid #ccc; font-size:1em;
   }
-  #controls button { background: #0057b7; color: white; cursor: pointer; }
+  #controls button { background:#0057b7; color:white; cursor:pointer; }
 
   /* Summary */
   #summary { background:#fff; border-left:6px solid #0057b7; padding:20px; margin:20px auto; width:95%;
@@ -40,11 +40,11 @@
 
 <h1>🏢 In-Office Presence Tracker (Secure)</h1>
 
-<!-- Authentication UI -->
+<!-- Authentication -->
 <div id="auth">
   <div id="loginForm">
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
     <button id="loginBtn">Login / Sign Up</button>
   </div>
   <div id="logoutForm" style="display:none;">
@@ -56,9 +56,9 @@
 <!-- Controls -->
 <div id="controls" style="display:none;">
   <label for="deadline">Choose Deadline:</label>
-  <input type="date" id="deadline" value="2025-12-26">
+  <input type="date" id="deadline" value="2025-12-26" />
   <label for="target">Target %:</label>
-  <input type="number" id="target" value="30" min="1" max="100" step="0.1">
+  <input type="number" id="target" value="30" min="1" max="100" step="0.1" />
   <button id="generateBtn">Generate</button>
 </div>
 
@@ -74,55 +74,62 @@
 
 <!-- Table -->
 <div class="table-container" style="display:none;">
-<table id="presenceTable">
-  <thead>
-    <tr>
-      <th>Week Start</th>
-      <th>Week End</th>
-      <th>Office Days</th>
-      <th>Working Days</th>
-      <th>Leave/Holiday Days</th>
-      <th>Weekly Presence %</th>
-      <th>Cumulative Office Days</th>
-      <th>Cumulative Presence %</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
-</table>
+  <table id="presenceTable">
+    <thead>
+      <tr>
+        <th>Week Start</th>
+        <th>Week End</th>
+        <th>Office Days</th>
+        <th>Working Days</th>
+        <th>Leave/Holiday Days</th>
+        <th>Weekly Presence %</th>
+        <th>Cumulative Office Days</th>
+        <th>Cumulative Presence %</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
 </div>
 
+<!-- Load Supabase first -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
 <script>
-/* ===== Supabase Configuration ===== */
+/* ---------- Supabase Setup ---------- */
 const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ===== Variables ===== */
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ---------- Variables ---------- */
 const tableBody = document.getElementById("tableBody");
 const totalDays = 260;
 let cumulativeOfficeDays = 56.68;
 const today = new Date("2025-10-20");
 
-/* ===== Auth ===== */
+/* ---------- Authentication ---------- */
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 
 loginBtn.onclick = async () => {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  if (!email || !password) return alert("Enter email and password.");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  if (!email || !password) return alert("Enter both email and password.");
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    // Try signup if login fails
+  const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+  if (loginError) {
     const { error: signupError } = await supabase.auth.signUp({ email, password });
-    if (signupError) return alert(signupError.message);
-    alert("Signup successful! Check your email for confirmation, then login again.");
-  } else {
-    showApp();
+    if (signupError) return alert("Error: " + signupError.message);
+    alert("Signup successful! Please check your email and confirm, then login again.");
+    return;
   }
+
+  // Wait for session, then load UI
+  setTimeout(async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) showApp();
+    else alert("Login successful, but session not ready. Try refreshing the page.");
+  }, 500);
 };
 
 logoutBtn.onclick = async () => {
@@ -130,9 +137,10 @@ logoutBtn.onclick = async () => {
   location.reload();
 };
 
+/* ---------- Show App After Login ---------- */
 async function showApp() {
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert("Please log in first.");
 
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("logoutForm").style.display = "block";
@@ -144,24 +152,15 @@ async function showApp() {
   generateTable();
 }
 
-/* ===== Generate Table ===== */
+/* ---------- Generate Table ---------- */
 async function generateTable() {
   tableBody.innerHTML = "";
   const deadline = new Date(document.getElementById("deadline").value);
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return alert("Please log in first.");
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-  const { data: dbData, error } = await supabase
-    .from("office_presence")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("week_start");
-
-  if (error) console.error(error);
-
-  dbData?.forEach(row =>
-    addRow(new Date(row.week_start), new Date(row.week_end), row.office_days, row.working_days, 0, true)
-  );
+  const { data: dbData } = await supabase.from("office_presence").select("*").eq("user_id", user.id).order("week_start");
+  dbData?.forEach(row => addRow(new Date(row.week_start), new Date(row.week_end), row.office_days, row.working_days, 0, true));
 
   let start = new Date(today);
   while (start <= deadline) {
@@ -174,7 +173,7 @@ async function generateTable() {
   recalculate();
 }
 
-/* ===== Add Row ===== */
+/* ---------- Add Row ---------- */
 function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = "", isSaved = false) {
   const row = document.createElement("tr");
   row.innerHTML = `
@@ -190,47 +189,32 @@ function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = 
   `;
   tableBody.appendChild(row);
 
-  const officeInput = row.cells[2].querySelector("input");
-  const workInput = row.cells[3].querySelector("input");
-
-  officeInput.addEventListener("input", () => recalcRow(row));
-  workInput.addEventListener("input", () => recalcRow(row));
-
-  row.cells[8].querySelector("button").addEventListener("click", async () => {
-    const user = (await supabase.auth.getUser()).data.user;
+  row.querySelector("button").addEventListener("click", async () => {
+    const { data: { user } } = await supabase.auth.getUser();
     const weekStartStr = row.cells[0].textContent;
     const weekEndStr = row.cells[1].textContent;
     const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value) || 0;
     const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value) || 0;
 
-    const { error } = await supabase
-      .from("office_presence")
-      .upsert([
-        {
-          week_start: weekStartStr,
-          week_end: weekEndStr,
-          office_days: officeDaysVal,
-          working_days: workingDaysVal,
-          user_id: user.id,
-        },
-      ]);
-
+    const { error } = await supabase.from("office_presence").upsert([
+      { week_start: weekStartStr, week_end: weekEndStr, office_days: officeDaysVal, working_days: workingDaysVal, user_id: user.id }
+    ]);
     if (error) return alert("Error saving row: " + error.message);
 
-    row.cells[8].querySelector("button").textContent = "Update";
+    row.querySelector("button").textContent = "Update";
     recalcRow(row);
   });
 
+  row.querySelectorAll("input").forEach(input => input.addEventListener("input", () => recalcRow(row)));
   recalcRow(row);
 }
 
-/* ===== Recalculate ===== */
+/* ---------- Recalculate ---------- */
 function recalcRow(row) {
   const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
   const work = parseFloat(row.cells[3].querySelector("input").value) || 0;
   const weeklyCell = row.cells[5];
   const weekly = work ? (office / work) * 100 : 0;
-
   weeklyCell.className = weekly >= 60 ? "high" : weekly >= 20 ? "medium" : "low";
   weeklyCell.textContent = weekly ? weekly.toFixed(1) + "%" : "";
   recalculate();
@@ -241,11 +225,9 @@ function recalculate() {
   let cumulative = 56.68;
   rows.forEach((row, i) => {
     const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
-    const cumDaysCell = row.cells[6];
-    const cumPercentCell = row.cells[7];
     if (i > 0) cumulative += office;
-    cumDaysCell.textContent = cumulative.toFixed(2);
-    cumPercentCell.textContent = ((cumulative / totalDays) * 100).toFixed(2) + "%";
+    row.cells[6].textContent = cumulative.toFixed(2);
+    row.cells[7].textContent = ((cumulative / totalDays) * 100).toFixed(2) + "%";
   });
   updateSummary(cumulative);
 }
@@ -253,26 +235,25 @@ function recalculate() {
 function updateSummary(cumulative) {
   const deadline = new Date(document.getElementById("deadline").value);
   const targetPercent = parseFloat(document.getElementById("target").value);
-  const summaryDays = document.getElementById("summaryDays");
-  const summaryPercent = document.getElementById("summaryPercent");
-  const requiredDays = document.getElementById("requiredDays");
-  const suggestedDaysWeek = document.getElementById("suggestedDaysWeek");
   const currentPercent = (cumulative / totalDays) * 100;
   const targetDays = (targetPercent / 100) * totalDays;
   const needed = Math.max(0, targetDays - cumulative);
   const diffWeeks = Math.ceil((deadline - today) / (7 * 24 * 60 * 60 * 1000));
   const daysPerWeek = needed / diffWeeks;
-  summaryDays.textContent = cumulative.toFixed(2);
-  summaryPercent.textContent = currentPercent.toFixed(2) + "%";
-  requiredDays.textContent = needed.toFixed(1);
-  suggestedDaysWeek.textContent = daysPerWeek.toFixed(2);
+  document.getElementById("summaryDays").textContent = cumulative.toFixed(2);
+  document.getElementById("summaryPercent").textContent = currentPercent.toFixed(2) + "%";
+  document.getElementById("requiredDays").textContent = needed.toFixed(1);
+  document.getElementById("suggestedDaysWeek").textContent = daysPerWeek.toFixed(2);
 }
 
-function formatDate(date) { return date.toISOString().split("T")[0]; }
+function formatDate(date){return date.toISOString().split("T")[0];}
 
-/* ===== Init ===== */
-document.getElementById("generateBtn").addEventListener("click", generateTable);
+/* ---------- Session Handling ---------- */
 supabase.auth.getSession().then(({ data }) => { if (data.session) showApp(); });
+supabase.auth.onAuthStateChange((_event, session) => { if (session) showApp(); });
+
+/* ---------- Generate Button ---------- */
+document.getElementById("generateBtn").addEventListener("click", generateTable);
 </script>
 </body>
 </html>

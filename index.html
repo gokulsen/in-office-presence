@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🏢 In-Office Presence Dashboard</title>
+<title>In-Office Presence Dashboard</title>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -134,7 +134,6 @@ button.table-btn {
 }
 button.table-btn:hover { background: var(--accent); }
 
-/* ─── Color coding ─── */
 .high { color: #1a7f37; font-weight: bold; }
 .medium { color: #d79c00; font-weight: bold; }
 .low { color: #c92a2a; font-weight: bold; }
@@ -155,9 +154,8 @@ footer {
 </head>
 <body>
 
-<h1>🏢 In-Office Presence Dashboard</h1>
+<h1>In-Office Presence Dashboard</h1>
 
-<!-- Controls -->
 <div id="controls">
   <label for="deadline">Deadline:</label>
   <input type="date" id="deadline" value="2025-12-26">
@@ -166,9 +164,8 @@ footer {
   <button id="generateBtn">Generate</button>
 </div>
 
-<!-- Overview Section -->
 <div id="overview">
-  <h2>🧾 Overview</h2>
+  <h2>Overview</h2>
   <p>In-Office Days So Far: <span id="summaryDays">0</span></p>
   <p>Current Presence Rate: <span id="summaryPercent">0%</span></p>
   <p>Goal Presence Target: <span id="targetPercent">30%</span></p>
@@ -176,7 +173,6 @@ footer {
   <p>Suggested Office Days per Week: <span id="suggestedDaysWeek">0</span></p>
 </div>
 
-<!-- Table -->
 <div class="table-container">
 <table id="presenceTable">
   <thead>
@@ -196,7 +192,6 @@ footer {
 </table>
 </div>
 
-<!-- Chart -->
 <canvas id="presenceChart" height="80"></canvas>
 
 <footer>Auto-synced with Supabase | Last updated: <span id="lastUpdated"></span></footer>
@@ -211,13 +206,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const totalDays = 260;
 const DEFAULT_WEEKDAYS = 5;
-const today = new Date("2025-10-20");
+const today = new Date();
 let startingCumulative = 56.68;
+let chartInstance;
 
 const tableBody = document.getElementById("tableBody");
 const lastUpdated = document.getElementById("lastUpdated");
-
-let chartInstance;
 
 function fmt(d){return new Date(d).toISOString().slice(0,10);}
 
@@ -296,11 +290,19 @@ function updateOverview(cumulative){
 }
 
 function updateChart(rows){
-  const labels=rows.map(r=>r.cells[0].textContent);
-  const data=rows.map(r=>{
-    const txt=r.cells[5].textContent.replace("%","");
-    return parseFloat(txt)||0;
+  const currentWeek = new Date();
+  const labels = [];
+  const data = [];
+
+  rows.forEach(r => {
+    const weekEnd = new Date(r.cells[1].textContent);
+    if (weekEnd <= currentWeek) {
+      labels.push(r.cells[0].textContent);
+      const val = parseFloat(r.cells[5].textContent.replace("%","")) || 0;
+      data.push(val);
+    }
   });
+
   const ctx=document.getElementById("presenceChart").getContext("2d");
   if(chartInstance) chartInstance.destroy();
   chartInstance=new Chart(ctx,{

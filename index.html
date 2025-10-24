@@ -8,7 +8,6 @@
   body { font-family: 'Segoe UI', sans-serif; background: #f7faff; color: #222; padding: 20px; margin:0;}
   h1 { text-align: center; color: #0057b7; }
 
-  /* Controls */
   #controls {
     display: flex;
     flex-wrap: wrap;
@@ -26,7 +25,6 @@
   }
   #controls button { background: #0057b7; color: white; cursor: pointer; }
 
-  /* Summary */
   #summary {
     background: #fff; 
     border-left: 6px solid #0057b7; 
@@ -37,19 +35,16 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
   }
 
-  /* Table */
   .table-container { overflow-x: auto; width: 100%; }
   table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 900px;}
   th, td { border: 1px solid #ddd; text-align: center; padding: 10px; }
   th { background: #0057b7; color: white; }
   tr:nth-child(even) { background: #f2f8ff; }
 
-  /* Color coding */
   .high { color: #008000; font-weight: bold; }
   .medium { color: #e6b800; font-weight: bold; }
   .low { color: #d9534f; font-weight: bold; }
 
-  /* Responsive font sizes */
   @media (max-width: 600px) {
     body { font-size: 14px; }
     table th, table td { padding: 6px; font-size: 13px; }
@@ -100,7 +95,6 @@
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Supabase config
 const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -108,12 +102,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const tableBody = document.getElementById("tableBody");
 const totalDays = 260;
 let cumulativeOfficeDays = 56.68;
-const today = new Date("2025-10-20"); // live: new Date()
+const today = new Date("2025-10-20"); // replace with new Date() for live use
 
-function formatDate(date){ return date.toISOString().split("T")[0]; }
+function formatDate(date) { return date.toISOString().split("T")[0]; }
 
 // ===== Add Row =====
-function addRow(weekStart, weekEnd, officeDays="", workDays="", leaveDays="", isSaved=false){
+function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = "", isSaved = false) {
   const row = document.createElement("tr");
   row.innerHTML = `
     <td>${formatDate(weekStart)}</td>
@@ -124,71 +118,72 @@ function addRow(weekStart, weekEnd, officeDays="", workDays="", leaveDays="", is
     <td class="weekly"></td>
     <td class="cumulativeDays"></td>
     <td class="cumulativePercent"></td>
-    <td><button>${isSaved?"Update":"Add"}</button></td>
+    <td><button>${isSaved ? "Update" : "Add"}</button></td>
   `;
   tableBody.appendChild(row);
 
   const officeInput = row.cells[2].querySelector("input");
   const workInput = row.cells[3].querySelector("input");
 
-  officeInput.addEventListener("input",()=>recalcRow(row));
-  workInput.addEventListener("input",()=>recalcRow(row));
+  officeInput.addEventListener("input", () => recalcRow(row));
+  workInput.addEventListener("input", () => recalcRow(row));
 
-  row.cells[8].querySelector("button").addEventListener("click",()=>saveRow(row));
-
+  row.cells[8].querySelector("button").addEventListener("click", () => saveRow(row));
   recalcRow(row);
 }
 
 // ===== Save Row =====
-async function saveRow(row){
+async function saveRow(row) {
   const weekStartStr = row.cells[0].textContent;
   const weekEndStr = row.cells[1].textContent;
-  const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value)||0;
-  const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value)||0;
+  const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value) || 0;
+  const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value) || 0;
 
-  try{
-    await supabase.from("office_presence")
-      .upsert([{ week_start:weekStartStr, week_end:weekEndStr, office_days:officeDaysVal, working_days:workingDaysVal }],
-      { onConflict:['week_start'] });
+  try {
+    await supabase
+      .from("office_presence")
+      .upsert([{ week_start: weekStartStr, week_end: weekEndStr, office_days: officeDaysVal, working_days: workingDaysVal }],
+      { onConflict: ['week_start'] });
     row.cells[8].querySelector("button").textContent = "Update";
     recalcRow(row);
-  }catch(err){
-    alert("Error saving row: "+err.message);
+  } catch (err) {
+    alert("Error saving row: " + err.message);
   }
 }
 
-// ===== Recalculate Weekly % and Cumulative =====
-function recalcRow(row){
-  const office = parseFloat(row.cells[2].querySelector("input").value)||0;
-  const work = parseFloat(row.cells[3].querySelector("input").value)||0;
+// ===== Recalculate Weekly & Cumulative =====
+function recalcRow(row) {
+  const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
+  const work = parseFloat(row.cells[3].querySelector("input").value) || 0;
   const weeklyCell = row.cells[5];
 
-  const weekly = work ? (office/work)*100:0;
-  if(weekly>=60) weeklyCell.className="high";
-  else if(weekly>=20) weeklyCell.className="medium";
-  else weeklyCell.className="low";
+  const weekly = work ? (office / work) * 100 : 0;
 
-  weeklyCell.textContent = weekly?weekly.toFixed(1)+"%":"";
+  if (weekly >= 60) weeklyCell.className = "high";
+  else if (weekly >= 20) weeklyCell.className = "medium";
+  else weeklyCell.className = "low";
+
+  weeklyCell.textContent = weekly ? weekly.toFixed(1) + "%" : "";
   recalculate();
 }
 
 // ===== Recalculate all rows =====
-function recalculate(){
+function recalculate() {
   const rows = document.querySelectorAll("#presenceTable tbody tr");
   let cumulative = 56.68;
 
-  rows.forEach((row,i)=>{
-    const office = parseFloat(row.cells[2].querySelector("input").value)||0;
-    if(i>0)cumulative+=office;
+  rows.forEach((row, i) => {
+    const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
+    if (i > 0) cumulative += office;
     row.cells[6].textContent = cumulative.toFixed(2);
-    row.cells[7].textContent = ((cumulative/totalDays)*100).toFixed(2)+"%";
+    row.cells[7].textContent = ((cumulative / totalDays) * 100).toFixed(2) + "%";
   });
 
   updateSummary(cumulative);
 }
 
 // ===== Update Summary =====
-function updateSummary(cumulative){
+function updateSummary(cumulative) {
   const deadline = new Date(document.getElementById("deadline").value);
   const targetPercent = parseFloat(document.getElementById("target").value);
 
@@ -197,48 +192,53 @@ function updateSummary(cumulative){
   const requiredDays = document.getElementById("requiredDays");
   const suggestedDaysWeek = document.getElementById("suggestedDaysWeek");
 
-  const currentPercent = (cumulative/totalDays)*100;
-  const targetDays = (targetPercent/100)*totalDays;
-  const needed = Math.max(0,targetDays-cumulative);
+  const currentPercent = (cumulative / totalDays) * 100;
+  const targetDays = (targetPercent / 100) * totalDays;
+  const needed = Math.max(0, targetDays - cumulative);
 
-  const diffWeeks = Math.ceil((deadline-today)/(7*24*60*60*1000));
-  const daysPerWeek = needed/diffWeeks;
+  const diffWeeks = Math.ceil((deadline - today) / (7 * 24 * 60 * 60 * 1000));
+  const daysPerWeek = needed / diffWeeks;
 
   summaryDays.textContent = cumulative.toFixed(2);
-  summaryPercent.textContent = currentPercent.toFixed(2)+"%";
+  summaryPercent.textContent = currentPercent.toFixed(2) + "%";
   requiredDays.textContent = needed.toFixed(1);
   suggestedDaysWeek.textContent = daysPerWeek.toFixed(2);
 }
 
-// ===== Generate Table =====
-async function generateTable(){
-  tableBody.innerHTML="";
+// ===== Generate Table (fixed to prevent duplicate weeks) =====
+async function generateTable() {
+  tableBody.innerHTML = "";
   const deadline = new Date(document.getElementById("deadline").value);
 
-  const {data: dbData,error} = await supabase.from("office_presence")
+  const { data: dbData, error } = await supabase
+    .from("office_presence")
     .select("*")
     .order("week_start");
 
-  if(error) return console.error(error);
-  dbData.forEach(row=>addRow(new Date(row.week_start),new Date(row.week_end),row.office_days,row.working_days,0,true));
+  if (error) return console.error(error);
 
-  let start = new Date(today);
-  while(start<=deadline){
+  // Add existing Supabase rows
+  dbData.forEach(row => addRow(new Date(row.week_start), new Date(row.week_end), row.office_days, row.working_days, 0, true));
+
+  // Find last saved week
+  let lastWeekEnd = dbData.length ? new Date(dbData[dbData.length - 1].week_end) : new Date(today);
+
+  // Start generating from next Monday after last saved week
+  let start = new Date(lastWeekEnd);
+  start.setDate(start.getDate() + 3); // next Monday (to skip overlap)
+
+  while (start <= deadline) {
     const end = new Date(start);
-    end.setDate(start.getDate()+4);
-    addRow(start,end);
-    start.setDate(start.getDate()+7);
+    end.setDate(start.getDate() + 4);
+    addRow(start, end);
+    start.setDate(start.getDate() + 7);
   }
 
   recalculate();
 }
 
-// ===== Event Listener =====
 document.getElementById("generateBtn").addEventListener("click", generateTable);
-
-// ===== Initialize =====
 generateTable();
 </script>
-
 </body>
 </html>

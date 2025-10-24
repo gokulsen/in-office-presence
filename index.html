@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>In-Office Presence Dashboard</title>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 :root {
   --primary: #0077cc;
@@ -36,7 +33,7 @@ h1 {
   width: fit-content;
 }
 
-/* ─── Controls ─── */
+/* Controls */
 #controls {
   background: var(--card);
   border-radius: 12px;
@@ -68,7 +65,7 @@ h1 {
 }
 #controls button:hover { background: var(--accent); }
 
-/* ─── Overview ─── */
+/* Overview */
 #overview {
   background: linear-gradient(145deg,#f0f7ff,#fff);
   border-radius: 16px;
@@ -91,7 +88,7 @@ h1 {
   color: var(--primary);
 }
 
-/* ─── Table ─── */
+/* Table */
 .table-container {
   overflow-x: auto;
   width: 95%;
@@ -137,8 +134,6 @@ button.table-btn:hover { background: var(--accent); }
 .high { color: #1a7f37; font-weight: bold; }
 .medium { color: #d79c00; font-weight: bold; }
 .low { color: #c92a2a; font-weight: bold; }
-
-canvas { margin-top: 25px; width: 95%; max-width: 900px; }
 
 footer {
   margin-top: 25px;
@@ -192,8 +187,6 @@ footer {
 </table>
 </div>
 
-<canvas id="presenceChart" height="80"></canvas>
-
 <footer>Auto-synced with Supabase | Last updated: <span id="lastUpdated"></span></footer>
 
 <script type="module">
@@ -208,7 +201,6 @@ const totalDays = 260;
 const DEFAULT_WEEKDAYS = 5;
 const today = new Date();
 let startingCumulative = 56.68;
-let chartInstance;
 
 const tableBody = document.getElementById("tableBody");
 const lastUpdated = document.getElementById("lastUpdated");
@@ -270,7 +262,6 @@ function recalcAll(){
     r.cells[7].textContent=((cumulative/totalDays)*100).toFixed(2)+"%";
   });
   updateOverview(cumulative);
-  updateChart(rows);
 }
 
 function updateOverview(cumulative){
@@ -287,43 +278,6 @@ function updateOverview(cumulative){
   document.getElementById("targetPercent").textContent=target+"%";
   document.getElementById("requiredDays").textContent=needed.toFixed(1);
   document.getElementById("suggestedDaysWeek").textContent=perWeek.toFixed(2);
-}
-
-function updateChart(rows){
-  const currentWeek = new Date();
-  const labels = [];
-  const data = [];
-
-  rows.forEach(r => {
-    const weekEnd = new Date(r.cells[1].textContent);
-    if (weekEnd <= currentWeek) {
-      labels.push(r.cells[0].textContent);
-      const val = parseFloat(r.cells[5].textContent.replace("%","")) || 0;
-      data.push(val);
-    }
-  });
-
-  const ctx=document.getElementById("presenceChart").getContext("2d");
-  if(chartInstance) chartInstance.destroy();
-  chartInstance=new Chart(ctx,{
-    type:'line',
-    data:{
-      labels:labels,
-      datasets:[{
-        label:"Weekly Presence %",
-        data:data,
-        fill:false,
-        borderColor:"#0077cc",
-        tension:0.2,
-        pointBackgroundColor:"#0077cc"
-      }]
-    },
-    options:{
-      responsive:true,
-      scales:{y:{beginAtZero:true,max:100}},
-      plugins:{legend:{display:false}}
-    }
-  });
 }
 
 async function generateTable(){

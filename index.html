@@ -3,257 +3,344 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🏢 In-Office Presence Tracker</title>
+<title>🏢 In-Office Presence Dashboard</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-  :root{--primary:#0077cc;--accent:#4dabf7;--bg:#f8fbff;--text:#1c1c1c;--card:#fff}
-  body{font-family:Segoe UI, Roboto, sans-serif;background:var(--bg);color:var(--text);margin:0;padding:20px;display:flex;flex-direction:column;align-items:center}
-  h1{color:var(--primary);margin:10px 0;font-size:2rem}
-  #controls{background:var(--card);border-radius:12px;padding:12px 16px;box-shadow:0 6px 18px rgba(0,0,0,.06);display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:95%;max-width:900px}
-  #controls label{font-weight:600;align-self:center}
-  #controls input,#controls button{border:1px solid #d0d7de;border-radius:8px;padding:8px 10px;font-size:1rem}
-  #controls button{background:var(--primary);color:#fff;cursor:pointer}
-  #controls button:hover{background:var(--accent)}
-  #summary{background:linear-gradient(145deg,#f0f7ff,#fff);border-radius:14px;padding:18px 22px;box-shadow:0 8px 24px rgba(0,0,0,.08);width:95%;max-width:900px;margin-top:14px}
-  #summary h2{margin:0 0 8px;color:var(--primary)}
-  #summary p{margin:6px 0;font-size:1rem}
-  #summary span{font-weight:700;color:var(--primary)}
-  .table-container{overflow-x:auto;width:95%;max-width:950px;margin-top:18px;background:var(--card);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-  table{width:100%;border-collapse:collapse;min-width:920px}
-  th,td{padding:10px;text-align:center;border-bottom:1px solid #e6ebf0}
-  th{background:var(--primary);color:#fff;position:sticky;top:0}
-  tr:nth-child(even){background:#f9fbfd}
-  input[type=number]{width:72px;border-radius:6px;padding:4px;text-align:center}
-  button.table-btn{padding:6px 10px;border-radius:8px;border:none;background:var(--primary);color:#fff;cursor:pointer}
-  button.table-btn:hover{background:var(--accent)}
-  .high{color:#1a7f37;font-weight:700}.medium{color:#d79c00;font-weight:700}.low{color:#c92a2a;font-weight:700}
-  @media(max-width:600px){h1{font-size:1.5rem}th,td{padding:8px;font-size:.9rem}#summary p{font-size:.95rem}}
+:root {
+  --primary: #0077cc;
+  --accent: #4dabf7;
+  --bg: #f8fbff;
+  --card: #ffffff;
+  --text: #1c1c1c;
+}
+body {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+h1 {
+  color: var(--primary);
+  margin-top: 10px;
+  font-size: 2rem;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 5px;
+  text-align: center;
+  width: fit-content;
+}
+
+/* ─── Controls ─── */
+#controls {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 14px;
+  width: 95%;
+  max-width: 900px;
+  margin-top: 20px;
+}
+#controls label {
+  font-weight: 600;
+  align-self: center;
+}
+#controls input, #controls button {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 1rem;
+}
+#controls button {
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+#controls button:hover { background: var(--accent); }
+
+/* ─── Overview ─── */
+#overview {
+  background: linear-gradient(145deg,#f0f7ff,#fff);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  padding: 20px 25px;
+  width: 95%;
+  max-width: 900px;
+  margin: 25px 0 15px 0;
+}
+#overview h2 {
+  color: var(--primary);
+  margin: 0 0 10px;
+}
+#overview p {
+  font-size: 1rem;
+  margin: 6px 0;
+}
+#overview span {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ─── Table ─── */
+.table-container {
+  overflow-x: auto;
+  width: 95%;
+  max-width: 950px;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+}
+th, td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #e6ebf0;
+}
+th {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+}
+tr:nth-child(even) { background: #f9fbfd; }
+input[type="number"] {
+  width: 70px;
+  border-radius: 6px;
+  padding: 4px;
+  text-align: center;
+}
+button.table-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+}
+button.table-btn:hover { background: var(--accent); }
+
+/* ─── Color coding ─── */
+.high { color: #1a7f37; font-weight: bold; }
+.medium { color: #d79c00; font-weight: bold; }
+.low { color: #c92a2a; font-weight: bold; }
+
+canvas { margin-top: 25px; width: 95%; max-width: 900px; }
+
+footer {
+  margin-top: 25px;
+  font-size: 0.85rem;
+  color: #777;
+}
+
+@media(max-width:600px){
+  h1 { font-size: 1.6rem; }
+  th,td { font-size: 0.85rem; }
+}
 </style>
 </head>
 <body>
-<h1>🏢 In-Office Presence Tracker</h1>
 
+<h1>🏢 In-Office Presence Dashboard</h1>
+
+<!-- Controls -->
 <div id="controls">
-  <label for="deadline">Deadline</label>
-  <input id="deadline" type="date" value="2025-12-26" />
-  <label for="target">Target %</label>
-  <input id="target" type="number" value="30" min="1" max="100" step="0.1" />
+  <label for="deadline">Deadline:</label>
+  <input type="date" id="deadline" value="2025-12-26">
+  <label for="target">Target %:</label>
+  <input type="number" id="target" value="30" min="1" max="100" step="0.1">
   <button id="generateBtn">Generate</button>
 </div>
 
-<div id="summary">
-  <h2>📊 Summary (Live)</h2>
-  <p>Current In-Office Days: <span id="summaryDays">0</span></p>
-  <p>Current In-Office Presence: <span id="summaryPercent">0%</span></p>
-  <p>Target Presence: <span id="targetPercent">30%</span></p>
-  <p>Required Office Days (to reach target): <span id="requiredDays">0</span></p>
-  <p>Suggested Days/Week (until deadline): <span id="suggestedDaysWeek">0</span></p>
+<!-- Overview Section -->
+<div id="overview">
+  <h2>🧾 Overview</h2>
+  <p>In-Office Days So Far: <span id="summaryDays">0</span></p>
+  <p>Current Presence Rate: <span id="summaryPercent">0%</span></p>
+  <p>Goal Presence Target: <span id="targetPercent">30%</span></p>
+  <p>Additional Office Days Needed: <span id="requiredDays">0</span></p>
+  <p>Suggested Office Days per Week: <span id="suggestedDaysWeek">0</span></p>
 </div>
 
+<!-- Table -->
 <div class="table-container">
-  <table id="presenceTable">
-    <thead>
-      <tr>
-        <th>Week Start</th>
-        <th>Week End</th>
-        <th>Office Days</th>
-        <th>Working Days</th>
-        <th>Leave Days</th>
-        <th>Weekly %</th>
-        <th>Cumulative Days</th>
-        <th>Cumulative %</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+<table id="presenceTable">
+  <thead>
+    <tr>
+      <th>Week Start</th>
+      <th>Week End</th>
+      <th>Office Days</th>
+      <th>Working Days</th>
+      <th>Leave Days</th>
+      <th>Weekly %</th>
+      <th>Cumulative Days</th>
+      <th>Cumulative %</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
 </div>
+
+<!-- Chart -->
+<canvas id="presenceChart" height="80"></canvas>
+
+<footer>Auto-synced with Supabase | Last updated: <span id="lastUpdated"></span></footer>
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// === Supabase config (provided) ===
 const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// === Constants / state ===
+const totalDays = 260;
+const DEFAULT_WEEKDAYS = 5;
+const today = new Date("2025-10-20");
+let startingCumulative = 56.68;
+
 const tableBody = document.getElementById("tableBody");
-const totalDays = 260;            // year working days baseline
-const today = new Date("2025-10-20"); // set to new Date() for live
-const DEFAULT_WEEKDAYS = 5;       // assume 5-day workweek baseline
-let startingCumulative = 56.68;   // previous cumulative in-office days
+const lastUpdated = document.getElementById("lastUpdated");
 
-function fmt(d){ return new Date(d).toISOString().slice(0,10); }
+let chartInstance;
 
-// === Add a table row (editable) ===
+function fmt(d){return new Date(d).toISOString().slice(0,10);}
+
 function addRow(weekStart, weekEnd, office="", working="", leave="", saved=false){
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
     <td>${fmt(weekStart)}</td>
     <td>${fmt(weekEnd)}</td>
-    <td><input type="number" step="0.1" value="${office ?? ""}"></td>
-    <td><input type="number" step="0.1" value="${working ?? ""}"></td>
-    <td><input type="number" step="0.1" value="${leave ?? ""}"></td>
+    <td><input type="number" step="0.1" value="${office}"></td>
+    <td><input type="number" step="0.1" value="${working}"></td>
+    <td><input type="number" step="0.1" value="${leave}"></td>
     <td class="weekly"></td>
     <td class="cumulativeDays"></td>
     <td class="cumulativePercent"></td>
-    <td><button class="table-btn">${saved ? "Update" : "Add"}</button></td>
-  `;
+    <td><button class="table-btn">${saved?"Update":"Add"}</button></td>`;
   tableBody.appendChild(tr);
 
-  // inputs
-  const officeInput = tr.cells[2].querySelector("input");
-  const workingInput = tr.cells[3].querySelector("input");
-  const leaveInput = tr.cells[4].querySelector("input");
-  const actionBtn = tr.cells[8].querySelector("button");
+  const officeInput=tr.cells[2].querySelector("input");
+  const workInput=tr.cells[3].querySelector("input");
+  const leaveInput=tr.cells[4].querySelector("input");
+  const actionBtn=tr.cells[8].querySelector("button");
 
-  // when leave changes and working is empty -> auto-fill working = DEFAULT_WEEKDAYS - leave
-  leaveInput.addEventListener("input", () => {
-    const leaveVal = parseFloat(leaveInput.value);
-    const workVal = parseFloat(workingInput.value);
-    if ((!workVal || workVal === 0) && !isNaN(leaveVal)) {
-      const inferred = Math.max(0, DEFAULT_WEEKDAYS - leaveVal);
-      workingInput.value = Number.isFinite(inferred) ? inferred : "";
-    }
+  leaveInput.addEventListener("input",()=>{if(!workInput.value){workInput.value=DEFAULT_WEEKDAYS-(parseFloat(leaveInput.value)||0);}recalcRow(tr);});
+  [officeInput,workInput].forEach(i=>i.addEventListener("input",()=>recalcRow(tr)));
+
+  actionBtn.addEventListener("click",async()=>{
+    const ws=tr.cells[0].textContent;
+    const we=tr.cells[1].textContent;
+    const o=parseFloat(officeInput.value)||0;
+    const w=parseFloat(workInput.value)||Math.max(0,DEFAULT_WEEKDAYS-(parseFloat(leaveInput.value)||0));
+    await supabase.from("office_presence").upsert({week_start:ws,week_end:we,office_days:o,working_days:w},{onConflict:['week_start']});
+    actionBtn.textContent="Update";
     recalcRow(tr);
+    lastUpdated.textContent=new Date().toLocaleString();
   });
 
-  // if working input changed manually, accept override
-  workingInput.addEventListener("input", () => recalcRow(tr));
-  officeInput.addEventListener("input", () => recalcRow(tr));
-
-  // save/update handler
-  actionBtn.addEventListener("click", async () => {
-    const weekStartStr = tr.cells[0].textContent;
-    const weekEndStr = tr.cells[1].textContent;
-    const officeVal = parseFloat(officeInput.value) || 0;
-    // compute working: prefer explicit working input; else infer from leave; else default 0
-    let workingVal = parseFloat(workingInput.value);
-    const leaveVal = parseFloat(leaveInput.value) || 0;
-    if (!workingVal || workingVal === 0) {
-      // infer only if leave provided; otherwise assume DEFAULT_WEEKDAYS - 0
-      workingVal = Math.max(0, DEFAULT_WEEKDAYS - (isFinite(leaveVal) ? leaveVal : 0));
-    }
-    try {
-      await supabase.from("office_presence").upsert(
-        { week_start: weekStartStr, week_end: weekEndStr, office_days: officeVal, working_days: workingVal },
-        { onConflict: ['week_start'] }
-      );
-      actionBtn.textContent = "Update";
-      // reflect possibly inferred workingVal back to UI
-      workingInput.value = workingVal;
-      recalcRow(tr);
-    } catch(err) {
-      alert("Save error: " + (err.message || err));
-    }
-  });
-
-  // initial calc
   recalcRow(tr);
 }
 
-// === recalc weekly for a row, and refresh cumulative ===
 function recalcRow(tr){
-  const officeVal = parseFloat(tr.cells[2].querySelector("input").value) || 0;
-  let workingVal = parseFloat(tr.cells[3].querySelector("input").value);
-  const leaveVal = parseFloat(tr.cells[4].querySelector("input").value) || 0;
-
-  // if workingVal is missing or zero, infer from leave (5 - leave)
-  if (!workingVal || workingVal === 0) {
-    if (leaveVal >= 0) workingVal = Math.max(0, DEFAULT_WEEKDAYS - leaveVal);
-    else workingVal = 0;
-  }
-
-  const weeklyCell = tr.cells[5];
-  const weeklyPct = workingVal > 0 ? (officeVal / workingVal) * 100 : 0;
-
-  // set color class
-  weeklyCell.className = weeklyPct >= 60 ? "high" : weeklyPct >= 20 ? "medium" : "low";
-  weeklyCell.textContent = weeklyPct ? weeklyPct.toFixed(1) + "%" : "";
-
-  // if inferred workingVal differs from input and input blank, show inferred in gray? 
-  // (we overwrite input so the value persists)
-  tr.cells[3].querySelector("input").value = workingVal;
-
-  // update cumulative across table
+  const o=parseFloat(tr.cells[2].querySelector("input").value)||0;
+  const w=parseFloat(tr.cells[3].querySelector("input").value)||Math.max(0,DEFAULT_WEEKDAYS-(parseFloat(tr.cells[4].querySelector("input").value)||0));
+  const weekly=w?(o/w)*100:0;
+  tr.cells[5].className=weekly>=60?"high":weekly>=20?"medium":"low";
+  tr.cells[5].textContent=weekly?weekly.toFixed(1)+"%":"";
   recalcAll();
 }
 
-// === recalc all rows cumulative and summary ===
 function recalcAll(){
-  const rows = Array.from(document.querySelectorAll("#presenceTable tbody tr"));
-  let cumulative = startingCumulative;
-  rows.forEach((r, idx) => {
-    const office = parseFloat(r.cells[2].querySelector("input").value) || 0;
-    if (idx > 0) cumulative += office; // first row assumed to be prior summary row (if present)
-    r.cells[6].textContent = cumulative.toFixed(2);
-    r.cells[7].textContent = ((cumulative / totalDays) * 100).toFixed(2) + "%";
+  const rows=[...document.querySelectorAll("#presenceTable tbody tr")];
+  let cumulative=startingCumulative;
+  rows.forEach((r,i)=>{
+    const o=parseFloat(r.cells[2].querySelector("input").value)||0;
+    if(i>0)cumulative+=o;
+    r.cells[6].textContent=cumulative.toFixed(2);
+    r.cells[7].textContent=((cumulative/totalDays)*100).toFixed(2)+"%";
   });
-  updateSummary(cumulative);
+  updateOverview(cumulative);
+  updateChart(rows);
 }
 
-// === update summary card ===
-function updateSummary(cumulative){
-  const deadline = new Date(document.getElementById("deadline").value);
-  const targetPct = parseFloat(document.getElementById("target").value) || 30;
-  const summaryDays = document.getElementById("summaryDays");
-  const summaryPercent = document.getElementById("summaryPercent");
-  const requiredDays = document.getElementById("requiredDays");
-  const suggested = document.getElementById("suggestedDaysWeek");
+function updateOverview(cumulative){
+  const deadline=new Date(document.getElementById("deadline").value);
+  const target=parseFloat(document.getElementById("target").value);
+  const currPct=(cumulative/totalDays)*100;
+  const targetDays=(target/100)*totalDays;
+  const needed=Math.max(0,targetDays-cumulative);
+  const weeksLeft=Math.ceil((deadline-today)/(7*24*60*60*1000));
+  const perWeek=weeksLeft>0?needed/weeksLeft:0;
 
-  const currPct = (cumulative / totalDays) * 100;
-  const targetDaysTotal = (targetPct / 100) * totalDays;
-  const need = Math.max(0, targetDaysTotal - cumulative);
-
-  const weeksLeft = Math.ceil((deadline - today) / (7 * 24 * 60 * 60 * 1000));
-  const perWeek = weeksLeft > 0 ? need / weeksLeft : need;
-
-  summaryDays.textContent = cumulative.toFixed(2);
-  summaryPercent.textContent = currPct.toFixed(2) + "%";
-  requiredDays.textContent = need.toFixed(1);
-  suggested.textContent = perWeek.toFixed(2);
+  document.getElementById("summaryDays").textContent=cumulative.toFixed(2);
+  document.getElementById("summaryPercent").textContent=currPct.toFixed(2)+"%";
+  document.getElementById("targetPercent").textContent=target+"%";
+  document.getElementById("requiredDays").textContent=needed.toFixed(1);
+  document.getElementById("suggestedDaysWeek").textContent=perWeek.toFixed(2);
 }
 
-// === generate table: fetch existing rows, avoid duplicates, generate future weeks after last saved ===
+function updateChart(rows){
+  const labels=rows.map(r=>r.cells[0].textContent);
+  const data=rows.map(r=>{
+    const txt=r.cells[5].textContent.replace("%","");
+    return parseFloat(txt)||0;
+  });
+  const ctx=document.getElementById("presenceChart").getContext("2d");
+  if(chartInstance) chartInstance.destroy();
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:"Weekly Presence %",
+        data:data,
+        fill:false,
+        borderColor:"#0077cc",
+        tension:0.2,
+        pointBackgroundColor:"#0077cc"
+      }]
+    },
+    options:{
+      responsive:true,
+      scales:{y:{beginAtZero:true,max:100}},
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+
 async function generateTable(){
-  tableBody.innerHTML = "";
-  const deadline = new Date(document.getElementById("deadline").value);
-
-  const { data, error } = await supabase
-    .from("office_presence")
-    .select("*")
-    .order("week_start");
-
-  if (error) {
-    console.error(error);
-    return;
+  tableBody.innerHTML="";
+  const deadline=new Date(document.getElementById("deadline").value);
+  const {data}=await supabase.from("office_presence").select("*").order("week_start");
+  if(data){data.forEach(r=>addRow(new Date(r.week_start),new Date(r.week_end),r.office_days,r.working_days,0,true));}
+  let lastEnd=data?.length?new Date(data[data.length-1].week_end):new Date(today);
+  let start=new Date(lastEnd); start.setDate(start.getDate()+3);
+  while(start<=deadline){
+    const end=new Date(start); end.setDate(start.getDate()+4);
+    addRow(start,end); start.setDate(start.getDate()+7);
   }
-
-  // If DB has rows, add them first.
-  data.forEach(r => addRow(new Date(r.week_start), new Date(r.week_end), r.office_days, r.working_days, 0, true));
-
-  // compute start date for generating new weeks:
-  // if db has data, continue after latest saved week_end; else start from today
-  let lastSavedEnd = data.length ? new Date(data[data.length - 1].week_end) : new Date(today);
-  // move to next Monday-like start: add 3 days to lastSavedEnd (keeps consistent with earlier logic)
-  let start = new Date(lastSavedEnd);
-  start.setDate(start.getDate() + 3);
-
-  while (start <= deadline) {
-    const end = new Date(start);
-    end.setDate(start.getDate() + 4);
-    addRow(start, end);
-    start.setDate(start.getDate() + 7);
-  }
-
   recalcAll();
 }
 
-// wire generate button
-document.getElementById("generateBtn").addEventListener("click", generateTable);
-
-// initial run
+document.getElementById("generateBtn").addEventListener("click",generateTable);
 generateTable();
+lastUpdated.textContent=new Date().toLocaleString();
 </script>
 </body>
 </html>

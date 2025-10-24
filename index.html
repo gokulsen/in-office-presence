@@ -71,6 +71,9 @@
 
 <!-- ✅ Load Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  window.supabase = window.Supabase.createClient("https://...supabase.co", "YOUR_ANON_KEY");
+</script>
 
 <script>
 window.addEventListener("load", () => {

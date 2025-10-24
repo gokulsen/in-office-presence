@@ -29,7 +29,7 @@ h1 {
   font-size: 2rem;
   border-bottom: 2px solid var(--accent);
   padding-bottom: 5px;
-  text-align: left;
+  text-align: center;
   width: fit-content;
 }
 
@@ -166,6 +166,7 @@ footer {
   <p>Goal Presence Target: <span id="targetPercent">30%</span></p>
   <p>Additional Office Days Needed: <span id="requiredDays">0</span></p>
   <p>Suggested Office Days per Week: <span id="suggestedDaysWeek">0</span></p>
+  <p>Working Days Remaining till Deadline: <span id="remainingWorkDays">0</span></p>
 </div>
 
 <div class="table-container">
@@ -206,6 +207,17 @@ const tableBody = document.getElementById("tableBody");
 const lastUpdated = document.getElementById("lastUpdated");
 
 function fmt(d){return new Date(d).toISOString().slice(0,10);}
+
+function calculateWorkingDaysUntil(deadline) {
+  let d = new Date();
+  let end = new Date(deadline);
+  let count = 0;
+  while (d <= end) {
+    if (d.getDay() >= 1 && d.getDay() <= 5) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
 
 function addRow(weekStart, weekEnd, office="", working="", leave="", saved=false){
   const tr=document.createElement("tr");
@@ -272,12 +284,14 @@ function updateOverview(cumulative){
   const needed=Math.max(0,targetDays-cumulative);
   const weeksLeft=Math.ceil((deadline-today)/(7*24*60*60*1000));
   const perWeek=weeksLeft>0?needed/weeksLeft:0;
+  const remainingWorkDays=calculateWorkingDaysUntil(deadline);
 
   document.getElementById("summaryDays").textContent=cumulative.toFixed(2);
   document.getElementById("summaryPercent").textContent=currPct.toFixed(2)+"%";
   document.getElementById("targetPercent").textContent=target+"%";
   document.getElementById("requiredDays").textContent=needed.toFixed(1);
   document.getElementById("suggestedDaysWeek").textContent=perWeek.toFixed(2);
+  document.getElementById("remainingWorkDays").textContent=remainingWorkDays;
 }
 
 async function generateTable(){

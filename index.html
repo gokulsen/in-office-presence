@@ -70,47 +70,66 @@
 </div>
 
 <!-- ✅ Load Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
-  window.supabase = window.Supabase.createClient("https://...supabase.co", "YOUR_ANON_KEY");
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/+esm"></script>
+
 
 <script>
+// ✅ Create global Supabase client once window loads
 window.addEventListener("load", () => {
-  if (!window.Supabase) { alert("❌ Supabase failed to load"); return; }
+  if (!window.Supabase) {
+    alert("❌ Supabase failed to load — please check your network or CDN access.");
+    console.error("Supabase UMD not found");
+    return;
+  }
 
-  // ✅ Your Supabase project details
+  console.log("✅ Supabase library loaded:", window.Supabase);
+
+  // ---- Supabase project credentials ----
   const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
 
-  const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log("✅ Supabase client ready (public)", supabase);
+  // ---- Create global client ----
+  window.supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("✅ Supabase client created:", window.supabase);
 
+  // ---- Initialize app ----
+  initPresenceTracker();
+});
+
+function initPresenceTracker() {
+  const supabase = window.supabase;
   const tableBody = document.getElementById("tableBody");
   const totalDays = 260;
   let cumulativeOfficeDays = 56.68;
   const today = new Date("2025-10-20");
 
-  // ----------- Generate Table ------------
+  document.getElementById("generateBtn").addEventListener("click", generateTable);
+
   async function generateTable() {
     tableBody.innerHTML = "";
     const deadline = new Date(document.getElementById("deadline").value);
 
-    // 📥 Fetch all data
+    console.log("Fetching data from Supabase...");
     const { data: dbData, error } = await supabase
       .from("office_presence")
       .select("*")
       .order("week_start");
-    if (error) { alert("Database fetch error: " + error.message); return; }
 
-    // Add saved rows
-    dbData?.forEach(row =>
-      addRow(new Date(row.week_start), new Date(row.week_end),
-        row.office_days, row.working_days, 0, true)
-    );
+    if (error) {
+      console.error("DB fetch error:", error);
+      alert("Database error: " + error.message);
+      return;
+    }
 
-    // Add upcoming rows
+    console.log("Fetched data:", dbData);
+
+    dbData?.forEach(row => {
+      const weekStart = new Date(row.week_start);
+      const weekEnd = new Date(row.week_end);
+      addRow(weekStart, weekEnd, row.office_days, row.working_days, 0, true);
+    });
+
     let start = new Date(today);
     while (start <= deadline) {
       const end = new Date(start);
@@ -118,10 +137,10 @@ window.addEventListener("load", () => {
       addRow(start, end);
       start.setDate(start.getDate() + 7);
     }
+
     recalculate();
   }
 
-  // ----------- Add Row ------------
   function addRow(weekStart, weekEnd, officeDays = "", workDays = "", leaveDays = "", isSaved = false) {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -137,12 +156,13 @@ window.addEventListener("load", () => {
     `;
     tableBody.appendChild(row);
 
-    // Save / Update button
     row.querySelector("button").addEventListener("click", async () => {
       const weekStartStr = row.cells[0].textContent;
       const weekEndStr = row.cells[1].textContent;
       const officeDaysVal = parseFloat(row.cells[2].querySelector("input").value) || 0;
       const workingDaysVal = parseFloat(row.cells[3].querySelector("input").value) || 0;
+
+      console.log("Saving to DB:", { weekStartStr, weekEndStr, officeDaysVal, workingDaysVal });
 
       const { error } = await supabase.from("office_presence").upsert([
         {
@@ -152,8 +172,15 @@ window.addEventListener("load", () => {
           working_days: workingDaysVal
         }
       ]);
-      if (error) return alert("❌ Save error: " + error.message);
-      row.querySelector("button").textContent = "Update";
+
+      if (error) {
+        alert("❌ Save error: " + error.message);
+        console.error("Upsert error:", error);
+      } else {
+        row.querySelector("button").textContent = "Update";
+        console.log("✅ Row saved:", { weekStartStr, weekEndStr });
+      }
+
       recalcRow(row);
     });
 
@@ -163,7 +190,6 @@ window.addEventListener("load", () => {
     recalcRow(row);
   }
 
-  // ----------- Recalculate Rows ------------
   function recalcRow(row) {
     const office = parseFloat(row.cells[2].querySelector("input").value) || 0;
     const work = parseFloat(row.cells[3].querySelector("input").value) || 0;
@@ -202,14 +228,30 @@ window.addEventListener("load", () => {
   }
 
   function formatDate(d) {
+    if (isNaN(d)) return "";
     return d.toISOString().split("T")[0];
   }
 
-  document.getElementById("generateBtn").addEventListener("click", generateTable);
-
-  // Auto-load data on page open
+  // Load table on page open
   generateTable();
-});
+}
 </script>
+<!-- ✅ Load Supabase library -->
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1";
+
+  const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
+
+  // ✅ Create the client
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("✅ Supabase client ready", supabase);
+
+  // Example test query
+  const { data, error } = await supabase.from("office_presence").select("*").limit(3);
+  console.log("Fetched data:", data, "Error:", error);
+</script>
+
 </body>
 </html>

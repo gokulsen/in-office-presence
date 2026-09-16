@@ -24,8 +24,6 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <h1>Hybrid Rhythm YTD Calculator</h1>
 <p>Track office attendance using actual working days after holidays.</p>
 
-<div class="card baseline"><div class="label">Fixed YTD Baseline (2026-09-04)</div><div class="value">16.80%</div></div>
-
 <div class="grid">
 <div class="card metric"><div class="label">YTD Office Days</div><div id="yo" class="value">0</div></div>
 <div class="card metric"><div class="label">YTD Working Days</div><div id="yw" class="value">0</div></div>
@@ -43,7 +41,7 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 
 <div class="card">
 <div class="title"><h2>Weekly Attendance</h2><button class="primary" onclick="addWeek()">Add Week</button></div>
-<div class="table"><table><thead><tr><th>Week Ending</th><th>Weekdays</th><th>Holidays</th><th>Working Days</th><th>Office Days</th><th>Week %</th><th>YTD Office</th><th>YTD Working</th><th>YTD %</th><th></th></tr></thead>
+<div class="table"><table><thead><tr><th>Week Ending</th><th>Weekdays</th><th>Holidays</th><th>Working Days</th><th>Present</th><th>Week %</th><th>YTD Present</th><th>YTD Working Days</th><th>YTD %</th><th></th></tr></thead>
 <tbody id="weeks"></tbody></table></div>
 </div>
 
@@ -57,16 +55,20 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 </div>
 
 <script>
+const baseline={date:"2026-09-04",office:27,working:161,presence:16.8};
 let weeks=[
-{date:"2026-09-04",weekdays:5,holidays:0,office:0},
 {date:"2026-09-11",weekdays:5,holidays:0,office:2},
 {date:"2026-09-18",weekdays:5,holidays:1,office:2}
 ],plans=[];
 const $=id=>document.getElementById(id);
 const pc=(a,b)=>b?a/b*100:0;
 const f=x=>x.toFixed(2)+"%";
+const f1=x=>x.toFixed(1)+"%";
 function render(){
- let yo=0,yw=0,body=$("weeks");body.innerHTML="";
+ let yo=baseline.office,yw=baseline.working,body=$("weeks");body.innerHTML=`<tr>
+  <td>${baseline.date}</td><td>—</td><td>—</td><td class="num">—</td>
+  <td class="num">—</td><td class="num">—</td><td class="num">${baseline.office}</td>
+  <td class="num">${baseline.working}</td><td class="num"><span class="pill">${baseline.presence.toFixed(1)}%</span></td><td></td></tr>`;
  weeks.forEach((w,i)=>{
   let wd=+w.weekdays||0,h=Math.min(wd,Math.max(0,+w.holidays||0)),work=wd-h,o=Math.min(work,Math.max(0,+w.office||0));
   yo+=o;yw+=work;
@@ -74,7 +76,7 @@ function render(){
   <td><input type="date" value="${w.date}"></td><td><input type="number" min="0" max="7" value="${wd}"></td>
   <td><input type="number" min="0" max="${wd}" value="${h}"></td><td class="num"><b>${work}</b></td>
   <td><input type="number" min="0" max="${work}" value="${o}"></td><td class="num"><span class="pill">${f(pc(o,work))}</span></td>
-  <td class="num">${yo}</td><td class="num">${yw}</td><td class="num"><span class="pill">${f(pc(yo,yw))}</span></td>
+  <td class="num">${yo}</td><td class="num">${yw}</td><td class="num"><span class="pill">${f1(pc(yo,yw))}</span></td>
   <td><button class="danger" onclick="weeks.splice(${i},1);render()">×</button></td></tr>`);
   let tr=body.lastElementChild,ins=tr.querySelectorAll("input");
   ins[0].onchange=e=>{w.date=e.target.value};ins[1].oninput=e=>{w.weekdays=+e.target.value;render()};
@@ -82,7 +84,7 @@ function render(){
  });
  $("yo").textContent=yo;$("yw").textContent=yw;
  let target=+( $("target").value)||20,current=pc(yo,yw);
- $("yp").textContent=f(current);$("yp").className="value "+(current>=target?"good":"");
+ $("yp").textContent=f1(current);$("yp").className="value "+(current>=target?"good":"");
  let n=Math.max(0,Math.ceil((target/100*yw-yo)/(1-target/100)));$("need").textContent=n;
  renderPlans(yo,yw);
 }

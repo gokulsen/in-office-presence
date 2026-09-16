@@ -1,316 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>In-Office Presence Dashboard</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hybrid Rhythm YTD Calculator</title>
 <style>
-:root {
-  --primary: #0077cc;
-  --accent: #4dabf7;
-  --bg: #f8fbff;
-  --card: #ffffff;
-  --text: #1c1c1c;
-}
-body {
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  margin: 0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-h1 {
-  color: var(--primary);
-  margin-top: 10px;
-  font-size: 2rem;
-  border-bottom: 2px solid var(--accent);
-  padding-bottom: 5px;
-  text-align: center;
-  width: fit-content;
-}
-
-/* Controls */
-#controls {
-  background: var(--card);
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  padding: 14px;
-  width: 95%;
-  max-width: 900px;
-  margin-top: 20px;
-}
-#controls label {
-  font-weight: 600;
-  align-self: center;
-}
-#controls input, #controls button {
-  border: 1px solid #d0d7de;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 1rem;
-}
-#controls button {
-  background: var(--primary);
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-#controls button:hover { background: var(--accent); }
-
-/* Overview */
-#overview {
-  background: linear-gradient(145deg,#f0f7ff,#fff);
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  padding: 20px 25px;
-  width: 95%;
-  max-width: 900px;
-  margin: 25px 0 15px 0;
-}
-#overview h2 {
-  color: var(--primary);
-  margin: 0 0 10px;
-}
-#overview p {
-  font-size: 1rem;
-  margin: 6px 0;
-}
-#overview span {
-  font-weight: 600;
-  color: var(--primary);
-}
-
-/* Table */
-.table-container {
-  overflow-x: auto;
-  width: 95%;
-  max-width: 950px;
-  background: var(--card);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 920px;
-}
-th, td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #e6ebf0;
-}
-th {
-  background: var(--primary);
-  color: #fff;
-  font-weight: 500;
-  position: sticky;
-  top: 0;
-}
-tr:nth-child(even) { background: #f9fbfd; }
-input[type="number"] {
-  width: 70px;
-  border-radius: 6px;
-  padding: 4px;
-  text-align: center;
-}
-button.table-btn {
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: none;
-  background: var(--primary);
-  color: white;
-  cursor: pointer;
-}
-button.table-btn:hover { background: var(--accent); }
-
-.high { color: #1a7f37; font-weight: bold; }
-.medium { color: #d79c00; font-weight: bold; }
-.low { color: #c92a2a; font-weight: bold; }
-
-footer {
-  margin-top: 25px;
-  font-size: 0.85rem;
-  color: #777;
-}
-
-@media(max-width:600px){
-  h1 { font-size: 1.6rem; }
-  th,td { font-size: 0.85rem; }
-}
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--border:#e3e8f0;--accent:#315efb;--good:#159570}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1200px;margin:auto;padding:28px 16px 50px}h1{margin:0 0 6px;font-size:28px}p{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:16px;box-shadow:0 6px 22px #0000000a}
+.metric .label{font-size:13px;color:var(--muted)}.metric .value{font-size:27px;font-weight:750;margin-top:7px}.good{color:var(--good)}
+button{border:0;border-radius:8px;padding:9px 13px;font-weight:650;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#eef2f8}.danger{background:#fff0f1;color:#c62828}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.controls input{width:90px}
+table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:10px 8px;border-bottom:1px solid var(--border);font-size:13px}th{background:#f8faff;text-align:left;color:#536075}
+input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;width:100%}.num{text-align:right}.pill{background:#eef2ff;padding:5px 8px;border-radius:20px;font-weight:700;white-space:nowrap}
+.table{overflow:auto}.title{display:flex;justify-content:space-between;align-items:center;gap:10px}.hint{font-size:13px;line-height:1.5}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.grid{grid-template-columns:1fr 1fr}h1{font-size:23px}}
 </style>
 </head>
 <body>
+<div class="wrap">
+<h1>Hybrid Rhythm YTD Calculator</h1>
+<p>Track office attendance using actual working days after holidays.</p>
 
-<h1>In-Office Presence Dashboard</h1>
-
-<div id="controls">
-  <label for="deadline">Deadline:</label>
-  <input type="date" id="deadline" value="2025-12-26">
-  <label for="target">Target %:</label>
-  <input type="number" id="target" value="30" min="1" max="100" step="0.1">
-  <button id="generateBtn">Generate</button>
+<div class="grid">
+<div class="card metric"><div class="label">YTD Office Days</div><div id="yo" class="value">0</div></div>
+<div class="card metric"><div class="label">YTD Working Days</div><div id="yw" class="value">0</div></div>
+<div class="card metric"><div class="label">YTD Attendance</div><div id="yp" class="value">0.00%</div></div>
+<div class="card metric"><div class="label">Office Days Needed for Target</div><div id="need" class="value">0</div></div>
 </div>
 
-<div id="overview">
-  <h2>Overview</h2>
-  <p>In-Office Days So Far: <span id="summaryDays">0</span></p>
-  <p>Current Presence Rate: <span id="summaryPercent">0%</span></p>
-  <p>Goal Presence Target: <span id="targetPercent">30%</span></p>
-  <p>Additional Office Days Needed: <span id="requiredDays">0</span></p>
-  <p>Suggested Office Days per Week: <span id="suggestedDaysWeek">0</span></p>
-  <p>Working Days Remaining till Deadline: <span id="remainingWorkDays">0</span></p>
+<div class="card">
+<div class="title"><h2>Settings</h2><div class="controls">
+<label>Target % <input id="target" type="number" min="0" max="100" step=".1" value="20"></label>
+<button class="secondary" onclick="addWeek()">+ Add Week</button><button class="secondary" onclick="save()">Save</button><button class="secondary" onclick="load()">Load</button><button class="danger" onclick="clearAll()">Clear</button>
+</div></div>
+<p class="hint"><b>Working Days = Weekdays − Holidays.</b> Weekly % = Office Days ÷ Working Days. YTD % = Total Office Days ÷ Total Working Days. Example: 5 weekdays − 1 holiday = 4 working days; 2 office days = 50%.</p>
 </div>
 
-<div class="table-container">
-<table id="presenceTable">
-  <thead>
-    <tr>
-      <th>Week Start</th>
-      <th>Week End</th>
-      <th>Office Days</th>
-      <th>Working Days</th>
-      <th>Leave Days</th>
-      <th>Weekly %</th>
-      <th>Cumulative Days</th>
-      <th>Cumulative %</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
-</table>
+<div class="card">
+<div class="title"><h2>Weekly Attendance</h2><button class="primary" onclick="addWeek()">Add Week</button></div>
+<div class="table"><table><thead><tr><th>Week Ending</th><th>Weekdays</th><th>Holidays</th><th>Working Days</th><th>Office Days</th><th>Week %</th><th>YTD Office</th><th>YTD Working</th><th>YTD %</th><th></th></tr></thead>
+<tbody id="weeks"></tbody></table></div>
 </div>
 
-<footer>Auto-synced with Supabase | Last updated: <span id="lastUpdated"></span></footer>
+<div class="card">
+<div class="title"><h2>Year-End Planner</h2><button class="secondary" onclick="addPlan()">+ Add Plan Week</button></div>
+<p class="hint">Use this to test patterns such as 2 days, then 3 days, then 2 days, then 3 days. Holidays are excluded automatically.</p>
+<div class="table"><table><thead><tr><th>Week</th><th>Weekdays</th><th>Holidays</th><th>Working Days</th><th>Planned Office Days</th><th>Projected YTD %</th><th></th></tr></thead><tbody id="plans"></tbody></table></div>
+<p id="projection" class="hint"></p>
+</div>
+<p class="hint">Data is stored locally in your browser when you click Save. No external libraries are used, so this file works directly with GitHub Pages.</p>
+</div>
 
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-const SUPABASE_URL = "https://febpaanqrqgrnbyrvfxx.supabase.co";
-const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnBhYW5xcnFncm5ieXJ2Znh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDUzNzMsImV4cCI6MjA3NjUyMTM3M30.dFyrWiNKqGCVDGLN9HU2IyRuI6rqAJaZGwRQjXri3mQ";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const totalDays = 260;
-const DEFAULT_WEEKDAYS = 5;
-const today = new Date();
-let startingCumulative = 60.5;
-
-const tableBody = document.getElementById("tableBody");
-const lastUpdated = document.getElementById("lastUpdated");
-
-function fmt(d){return new Date(d).toISOString().slice(0,10);}
-
-function calculateWorkingDaysUntil(deadline) {
-  let d = new Date();
-  let end = new Date(deadline);
-  let count = 0;
-  while (d <= end) {
-    if (d.getDay() >= 1 && d.getDay() <= 5) count++;
-    d.setDate(d.getDate() + 1);
-  }
-  return count;
+<script>
+let weeks=[
+{date:"2026-09-04",weekdays:5,holidays:0,office:0},
+{date:"2026-09-11",weekdays:5,holidays:0,office:2},
+{date:"2026-09-18",weekdays:5,holidays:1,office:2}
+],plans=[];
+const $=id=>document.getElementById(id);
+const pc=(a,b)=>b?a/b*100:0;
+const f=x=>x.toFixed(2)+"%";
+function render(){
+ let yo=0,yw=0,body=$("weeks");body.innerHTML="";
+ weeks.forEach((w,i)=>{
+  let wd=+w.weekdays||0,h=Math.min(wd,Math.max(0,+w.holidays||0)),work=wd-h,o=Math.min(work,Math.max(0,+w.office||0));
+  yo+=o;yw+=work;
+  body.insertAdjacentHTML("beforeend",`<tr>
+  <td><input type="date" value="${w.date}"></td><td><input type="number" min="0" max="7" value="${wd}"></td>
+  <td><input type="number" min="0" max="${wd}" value="${h}"></td><td class="num"><b>${work}</b></td>
+  <td><input type="number" min="0" max="${work}" value="${o}"></td><td class="num"><span class="pill">${f(pc(o,work))}</span></td>
+  <td class="num">${yo}</td><td class="num">${yw}</td><td class="num"><span class="pill">${f(pc(yo,yw))}</span></td>
+  <td><button class="danger" onclick="weeks.splice(${i},1);render()">×</button></td></tr>`);
+  let tr=body.lastElementChild,ins=tr.querySelectorAll("input");
+  ins[0].onchange=e=>{w.date=e.target.value};ins[1].oninput=e=>{w.weekdays=+e.target.value;render()};
+  ins[2].oninput=e=>{w.holidays=+e.target.value;render()};ins[3].oninput=e=>{w.office=+e.target.value;render()};
+ });
+ $("yo").textContent=yo;$("yw").textContent=yw;
+ let target=+( $("target").value)||20,current=pc(yo,yw);
+ $("yp").textContent=f(current);$("yp").className="value "+(current>=target?"good":"");
+ let n=Math.max(0,Math.ceil((target/100*yw-yo)/(1-target/100)));$("need").textContent=n;
+ renderPlans(yo,yw);
 }
-
-function addRow(weekStart, weekEnd, office="", working="", leave="", saved=false){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td>${fmt(weekStart)}</td>
-    <td>${fmt(weekEnd)}</td>
-    <td><input type="number" step="0.1" value="${office}"></td>
-    <td><input type="number" step="0.1" value="${working}"></td>
-    <td><input type="number" step="0.1" value="${leave}"></td>
-    <td class="weekly"></td>
-    <td class="cumulativeDays"></td>
-    <td class="cumulativePercent"></td>
-    <td><button class="table-btn">${saved?"Update":"Add"}</button></td>`;
-  tableBody.appendChild(tr);
-
-  const officeInput=tr.cells[2].querySelector("input");
-  const workInput=tr.cells[3].querySelector("input");
-  const leaveInput=tr.cells[4].querySelector("input");
-  const actionBtn=tr.cells[8].querySelector("button");
-
-  leaveInput.addEventListener("input",()=>{if(!workInput.value){workInput.value=DEFAULT_WEEKDAYS-(parseFloat(leaveInput.value)||0);}recalcRow(tr);});
-  [officeInput,workInput].forEach(i=>i.addEventListener("input",()=>recalcRow(tr)));
-
-  actionBtn.addEventListener("click",async()=>{
-    const ws=tr.cells[0].textContent;
-    const we=tr.cells[1].textContent;
-    const o=parseFloat(officeInput.value)||0;
-    const w=parseFloat(workInput.value)||Math.max(0,DEFAULT_WEEKDAYS-(parseFloat(leaveInput.value)||0));
-    await supabase.from("office_presence").upsert({week_start:ws,week_end:we,office_days:o,working_days:w},{onConflict:['week_start']});
-    actionBtn.textContent="Update";
-    recalcRow(tr);
-    lastUpdated.textContent=new Date().toLocaleString();
-  });
-
-  recalcRow(tr);
+function renderPlans(yo,yw){
+ let po=yo,pw=yw,b=$("plans");b.innerHTML="";
+ plans.forEach((p,i)=>{
+  let wd=+p.weekdays||0,h=Math.min(wd,Math.max(0,+p.holidays||0)),work=wd-h,o=Math.min(work,Math.max(0,+p.office||0));po+=o;pw+=work;
+  b.insertAdjacentHTML("beforeend",`<tr><td>${i+1}</td><td><input type="number" min="0" max="7" value="${wd}"></td>
+  <td><input type="number" min="0" max="${wd}" value="${h}"></td><td><b>${work}</b></td>
+  <td><input type="number" min="0" max="${work}" value="${o}"></td><td><span class="pill">${f(pc(po,pw))}</span></td>
+  <td><button class="danger" onclick="plans.splice(${i},1);render()">×</button></td></tr>`);
+  let tr=b.lastElementChild,ins=tr.querySelectorAll("input");
+  ins[0].oninput=e=>{p.weekdays=+e.target.value;render()};ins[1].oninput=e=>{p.holidays=+e.target.value;render()};ins[2].oninput=e=>{p.office=+e.target.value;render()};
+ });
+ $("projection").innerHTML=plans.length?`<b>Projected after planned weeks:</b> ${po} office / ${pw} working = <b>${f(pc(po,pw))}</b>`:"Add future weeks to see a projection.";
 }
-
-function recalcRow(tr){
-  const o=parseFloat(tr.cells[2].querySelector("input").value)||0;
-  const w=parseFloat(tr.cells[3].querySelector("input").value)||Math.max(0,DEFAULT_WEEKDAYS-(parseFloat(tr.cells[4].querySelector("input").value)||0));
-  const weekly=w?(o/w)*100:0;
-  tr.cells[5].className=weekly>=60?"high":weekly>=20?"medium":"low";
-  tr.cells[5].textContent=weekly?weekly.toFixed(1)+"%":"";
-  recalcAll();
-}
-
-function recalcAll(){
-  const rows=[...document.querySelectorAll("#presenceTable tbody tr")];
-  let cumulative=startingCumulative;
-  rows.forEach((r,i)=>{
-    const o=parseFloat(r.cells[2].querySelector("input").value)||0;
-    if(i>0)cumulative+=o;
-    r.cells[6].textContent=cumulative.toFixed(2);
-    r.cells[7].textContent=((cumulative/totalDays)*100).toFixed(2)+"%";
-  });
-  updateOverview(cumulative);
-}
-
-function updateOverview(cumulative){
-  const deadline=new Date(document.getElementById("deadline").value);
-  const target=parseFloat(document.getElementById("target").value);
-  const currPct=(cumulative/totalDays)*100;
-  const targetDays=(target/100)*totalDays;
-  const needed=Math.max(0,targetDays-cumulative);
-  const weeksLeft=Math.ceil((deadline-today)/(7*24*60*60*1000));
-  const perWeek=weeksLeft>0?needed/weeksLeft:0;
-  const remainingWorkDays=calculateWorkingDaysUntil(deadline);
-
-  document.getElementById("summaryDays").textContent=cumulative.toFixed(2);
-  document.getElementById("summaryPercent").textContent=currPct.toFixed(2)+"%";
-  document.getElementById("targetPercent").textContent=target+"%";
-  document.getElementById("requiredDays").textContent=needed.toFixed(1);
-  document.getElementById("suggestedDaysWeek").textContent=perWeek.toFixed(2);
-  document.getElementById("remainingWorkDays").textContent=remainingWorkDays;
-}
-
-async function generateTable(){
-  tableBody.innerHTML="";
-  const deadline=new Date(document.getElementById("deadline").value);
-  const {data}=await supabase.from("office_presence").select("*").order("week_start");
-  if(data){data.forEach(r=>addRow(new Date(r.week_start),new Date(r.week_end),r.office_days,r.working_days,0,true));}
-  let lastEnd=data?.length?new Date(data[data.length-1].week_end):new Date(today);
-  let start=new Date(lastEnd); start.setDate(start.getDate()+3);
-  while(start<=deadline){
-    const end=new Date(start); end.setDate(start.getDate()+4);
-    addRow(start,end); start.setDate(start.getDate()+7);
-  }
-  recalcAll();
-}
-
-document.getElementById("generateBtn").addEventListener("click",generateTable);
-generateTable();
-lastUpdated.textContent=new Date().toLocaleString();
+function addWeek(){weeks.push({date:new Date().toISOString().slice(0,10),weekdays:5,holidays:0,office:2});render()}
+function addPlan(){plans.push({weekdays:5,holidays:0,office:2});render()}
+function save(){localStorage.setItem("hybridRhythm",JSON.stringify({weeks,plans,target:$("target").value}));alert("Saved in this browser.")}
+function load(){let d=JSON.parse(localStorage.getItem("hybridRhythm")||"null");if(!d)return alert("No saved data.");weeks=d.weeks||[];plans=d.plans||[];$("target").value=d.target||20;render()}
+function clearAll(){if(confirm("Clear all attendance data?")){weeks=[];plans=[];localStorage.removeItem("hybridRhythm");render()}}
+$("target").oninput=render;render();
 </script>
 </body>
 </html>

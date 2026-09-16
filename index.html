@@ -15,6 +15,7 @@ button{border:0;border-radius:8px;padding:9px 13px;font-weight:650;cursor:pointe
 table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:10px 8px;border-bottom:1px solid var(--border);font-size:13px}th{background:#f8faff;text-align:left;color:#536075}
 input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;width:100%}.num{text-align:right}.pill{background:#eef2ff;padding:5px 8px;border-radius:20px;font-weight:700;white-space:nowrap}
 .table{overflow:auto}.title{display:flex;justify-content:space-between;align-items:center;gap:10px}.hint{font-size:13px;line-height:1.5}
+.baseline{border-left:4px solid var(--accent)}
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.grid{grid-template-columns:1fr 1fr}h1{font-size:23px}}
 </style>
 </head>
@@ -22,6 +23,8 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <div class="wrap">
 <h1>Hybrid Rhythm YTD Calculator</h1>
 <p>Track office attendance using actual working days after holidays.</p>
+
+<div class="card baseline"><div class="label">Fixed YTD Baseline (2026-09-04)</div><div class="value">16.80%</div></div>
 
 <div class="grid">
 <div class="card metric"><div class="label">YTD Office Days</div><div id="yo" class="value">0</div></div>

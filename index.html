@@ -11,7 +11,6 @@
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:16px;box-shadow:0 6px 22px #0000000a}
 .metric .label{font-size:13px;color:var(--muted)}.metric .value{font-size:27px;font-weight:750;margin-top:7px}.good{color:var(--good)}
 button{border:0;border-radius:8px;padding:9px 13px;font-weight:650;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#eef2f8}.danger{background:#fff0f1;color:#c62828}
-.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.controls input{width:90px}
 table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:10px 8px;border-bottom:1px solid var(--border);font-size:13px}th{background:#f8faff;text-align:left;color:#536075}
 input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;width:100%}.num{text-align:right}.pill{background:#eef2ff;padding:5px 8px;border-radius:20px;font-weight:700;white-space:nowrap}
 .table{overflow:auto}.title{display:flex;justify-content:space-between;align-items:center;gap:10px}.hint{font-size:13px;line-height:1.5}
@@ -28,15 +27,6 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <div class="card metric"><div class="label">YTD Office Days</div><div id="yo" class="value">0</div></div>
 <div class="card metric"><div class="label">YTD Working Days</div><div id="yw" class="value">0</div></div>
 <div class="card metric"><div class="label">YTD Attendance</div><div id="yp" class="value">0.00%</div></div>
-<div class="card metric"><div class="label">Office Days Needed for Target</div><div id="need" class="value">0</div></div>
-</div>
-
-<div class="card">
-<div class="title"><h2>Settings</h2><div class="controls">
-<label>Target % <input id="target" type="number" min="0" max="100" step=".1" value="20"></label>
-<button class="secondary" onclick="addWeek()">+ Add Week</button><button class="secondary" onclick="save()">Save</button><button class="secondary" onclick="load()">Load</button><button class="danger" onclick="clearAll()">Clear</button>
-</div></div>
-<p class="hint"><b>Working Days = Weekdays − Holidays.</b> Weekly % = Office Days ÷ Working Days. YTD % = Total Office Days ÷ Total Working Days. Example: 5 weekdays − 1 holiday = 4 working days; 2 office days = 50%.</p>
 </div>
 
 <div class="card">
@@ -51,7 +41,7 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <div class="table"><table><thead><tr><th>Week</th><th>Weekdays</th><th>Holidays</th><th>Working Days</th><th>Planned Office Days</th><th>Projected YTD %</th><th></th></tr></thead><tbody id="plans"></tbody></table></div>
 <p id="projection" class="hint"></p>
 </div>
-<p class="hint">Data is stored locally in your browser when you click Save. No external libraries are used, so this file works directly with GitHub Pages.</p>
+<p class="hint">No external libraries are used, so this file works directly with GitHub Pages.</p>
 </div>
 
 <script>
@@ -83,9 +73,8 @@ function render(){
   ins[2].oninput=e=>{w.holidays=+e.target.value;render()};ins[3].oninput=e=>{w.office=+e.target.value;render()};
  });
  $("yo").textContent=yo;$("yw").textContent=yw;
- let target=+( $("target").value)||20,current=pc(yo,yw);
- $("yp").textContent=f1(current);$("yp").className="value "+(current>=target?"good":"");
- let n=Math.max(0,Math.ceil((target/100*yw-yo)/(1-target/100)));$("need").textContent=n;
+ let current=pc(yo,yw);
+ $("yp").textContent=f1(current);$("yp").className="value";
  renderPlans(yo,yw);
 }
 function renderPlans(yo,yw){
@@ -103,10 +92,7 @@ function renderPlans(yo,yw){
 }
 function addWeek(){weeks.push({date:new Date().toISOString().slice(0,10),weekdays:5,holidays:0,office:2});render()}
 function addPlan(){plans.push({weekdays:5,holidays:0,office:2});render()}
-function save(){localStorage.setItem("hybridRhythm",JSON.stringify({weeks,plans,target:$("target").value}));alert("Saved in this browser.")}
-function load(){let d=JSON.parse(localStorage.getItem("hybridRhythm")||"null");if(!d)return alert("No saved data.");weeks=d.weeks||[];plans=d.plans||[];$("target").value=d.target||20;render()}
-function clearAll(){if(confirm("Clear all attendance data?")){weeks=[];plans=[];localStorage.removeItem("hybridRhythm");render()}}
-$("target").oninput=render;render();
+render();
 </script>
 </body>
 </html>

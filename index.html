@@ -22,6 +22,7 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <div class="wrap">
 <h1>Hybrid Rhythm YTD Calculator</h1>
 <p>Track office attendance using actual working days after holidays.</p>
+<p id="sync-status" class="hint" role="status">Connecting to Supabase…</p>
 
 <div class="grid">
 <div class="card metric"><div class="label">YTD Office Days</div><div id="yo" class="value">0</div></div>
@@ -41,19 +42,84 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <div class="table"><table><thead><tr><th>Week</th><th>Weekdays</th><th>Holidays</th><th>Working Days</th><th>Planned Office Days</th><th>Projected YTD %</th><th></th></tr></thead><tbody id="plans"></tbody></table></div>
 <p id="projection" class="hint"></p>
 </div>
-<p class="hint">No external libraries are used, so this file works directly with GitHub Pages.</p>
+<p class="hint">Data is shared through Supabase and works directly with GitHub Pages.</p>
 </div>
 
 <script>
+const SUPABASE_URL="https://febpaanqrqgrnbyrvfxx.supabase.co";
+const SUPABASE_KEY="sb_publishable_o2jH-kCUPNhN1grO1Yc3Ag_kXwvl8vy";
+const SUPABASE_TABLE="attendance_calculator";
+const SUPABASE_ROW_ID="default";
 const baseline={date:"2026-09-04",office:27,working:161,presence:16.8};
 let weeks=[
 {date:"2026-09-11",weekdays:5,holidays:0,office:2},
 {date:"2026-09-18",weekdays:5,holidays:1,office:2}
 ],plans=[];
+let saveTimer=null;
+let isLoading=true;
 const $=id=>document.getElementById(id);
 const pc=(a,b)=>b?a/b*100:0;
 const f=x=>x.toFixed(2)+"%";
 const f1=x=>x.toFixed(1)+"%";
+function setSyncStatus(message,isError=false){
+ $("sync-status").textContent=message;
+ $("sync-status").style.color=isError?"#c62828":"";
+}
+function state(){
+ return {id:SUPABASE_ROW_ID,baseline,weeks,plans,updated_at:new Date().toISOString()};
+}
+async function supabaseRequest(path,options={}){
+ let response=await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}${path}`,{
+  ...options,
+  headers:{
+   apikey:SUPABASE_KEY,
+   Authorization:`Bearer ${SUPABASE_KEY}`,
+   "Content-Type":"application/json",
+   ...(options.headers||{})
+  }
+ });
+ if(!response.ok) throw new Error((await response.text())||`Supabase request failed (${response.status})`);
+ return response.status===204?null:response.json();
+}
+function scheduleSave(){
+ if(isLoading)return;
+ clearTimeout(saveTimer);
+ saveTimer=setTimeout(saveState,400);
+}
+async function saveState(){
+ try{
+  setSyncStatus("Saving to Supabase…");
+  await supabaseRequest(`?on_conflict=id`,{
+   method:"POST",
+   headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
+   body:JSON.stringify(state())
+  });
+  setSyncStatus(`Saved to Supabase at ${new Date().toLocaleTimeString()}`);
+ }catch(error){
+  console.error("Unable to save attendance data:",error);
+  setSyncStatus("Could not save to Supabase. Check the table and RLS policies.",true);
+ }
+}
+async function loadState(){
+ try{
+  let rows=await supabaseRequest(`?id=eq.${encodeURIComponent(SUPABASE_ROW_ID)}&select=id,baseline,weeks,plans`);
+  if(rows.length){
+   let saved=rows[0];
+   if(saved.baseline)Object.assign(baseline,saved.baseline);
+   if(Array.isArray(saved.weeks))weeks=saved.weeks;
+   if(Array.isArray(saved.plans))plans=saved.plans;
+  }else{
+   await saveState();
+  }
+  setSyncStatus("Synced with Supabase");
+ }catch(error){
+  console.error("Unable to load attendance data:",error);
+  setSyncStatus("Could not load Supabase data. Showing the default values.",true);
+ }finally{
+  isLoading=false;
+  render();
+ }
+}
 function render(){
  let yo=baseline.office,yw=baseline.working,body=$("weeks");body.innerHTML=`<tr>
   <td>${baseline.date}</td><td>—</td><td>—</td><td class="num">—</td>
@@ -67,10 +133,10 @@ function render(){
   <td><input type="number" min="0" max="${wd}" value="${h}"></td><td class="num"><b>${work}</b></td>
   <td><input type="number" min="0" max="${work}" value="${o}"></td><td class="num"><span class="pill">${f(pc(o,work))}</span></td>
   <td class="num">${yo}</td><td class="num">${yw}</td><td class="num"><span class="pill">${f1(pc(yo,yw))}</span></td>
-  <td><button class="danger" onclick="weeks.splice(${i},1);render()">×</button></td></tr>`);
+  <td><button class="danger" onclick="weeks.splice(${i},1);render();scheduleSave()">×</button></td></tr>`);
   let tr=body.lastElementChild,ins=tr.querySelectorAll("input");
-  ins[0].onchange=e=>{w.date=e.target.value};ins[1].oninput=e=>{w.weekdays=+e.target.value;render()};
-  ins[2].oninput=e=>{w.holidays=+e.target.value;render()};ins[3].oninput=e=>{w.office=+e.target.value;render()};
+  ins[0].onchange=e=>{w.date=e.target.value;scheduleSave()};ins[1].oninput=e=>{w.weekdays=+e.target.value;render();scheduleSave()};
+  ins[2].oninput=e=>{w.holidays=+e.target.value;render();scheduleSave()};ins[3].oninput=e=>{w.office=+e.target.value;render();scheduleSave()};
  });
  $("yo").textContent=yo;$("yw").textContent=yw;
  let current=pc(yo,yw);
@@ -84,15 +150,15 @@ function renderPlans(yo,yw){
   b.insertAdjacentHTML("beforeend",`<tr><td>${i+1}</td><td><input type="number" min="0" max="7" value="${wd}"></td>
   <td><input type="number" min="0" max="${wd}" value="${h}"></td><td><b>${work}</b></td>
   <td><input type="number" min="0" max="${work}" value="${o}"></td><td><span class="pill">${f(pc(po,pw))}</span></td>
-  <td><button class="danger" onclick="plans.splice(${i},1);render()">×</button></td></tr>`);
+  <td><button class="danger" onclick="plans.splice(${i},1);render();scheduleSave()">×</button></td></tr>`);
   let tr=b.lastElementChild,ins=tr.querySelectorAll("input");
-  ins[0].oninput=e=>{p.weekdays=+e.target.value;render()};ins[1].oninput=e=>{p.holidays=+e.target.value;render()};ins[2].oninput=e=>{p.office=+e.target.value;render()};
+  ins[0].oninput=e=>{p.weekdays=+e.target.value;render();scheduleSave()};ins[1].oninput=e=>{p.holidays=+e.target.value;render();scheduleSave()};ins[2].oninput=e=>{p.office=+e.target.value;render();scheduleSave()};
  });
  $("projection").innerHTML=plans.length?`<b>Projected after planned weeks:</b> ${po} office / ${pw} working = <b>${f(pc(po,pw))}</b>`:"Add future weeks to see a projection.";
 }
-function addWeek(){weeks.push({date:new Date().toISOString().slice(0,10),weekdays:5,holidays:0,office:2});render()}
-function addPlan(){plans.push({weekdays:5,holidays:0,office:2});render()}
-render();
+function addWeek(){weeks.push({date:new Date().toISOString().slice(0,10),weekdays:5,holidays:0,office:2});render();scheduleSave()}
+function addPlan(){plans.push({weekdays:5,holidays:0,office:2});render();scheduleSave()}
+loadState();
 </script>
 </body>
 </html>

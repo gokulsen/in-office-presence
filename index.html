@@ -22,7 +22,7 @@ input{border:1px solid #ccd4e0;border-radius:7px;padding:8px;font-size:13px;widt
 <div class="wrap">
 <h1>Hybrid Rhythm YTD Calculator</h1>
 <p>Track office attendance using actual working days after holidays.</p>
-<p id="sync-status" class="hint" role="status">Connecting to Supabaseâ€¦</p>
+<p id="sync-status" class="hint" role="status">Connecting to Supabase...</p>
 
 <div class="grid">
 <div class="card metric"><div class="label">YTD Office Days</div><div id="yo" class="value">0</div></div>
@@ -181,7 +181,7 @@ function scheduleSave(){
 }
 async function saveState(){
  try{
-  setSyncStatus("Saving to Supabaseâ€¦");
+  setSyncStatus("Saving to Supabase...");
   await supabaseRequest(`?on_conflict=id`,{
    method:"POST",
    headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
@@ -311,7 +311,7 @@ function render(){
  $("rolling-13").textContent=f(pc(rollingTotals.office,rollingTotals.working));
  $("rolling-13-weeks").textContent=rollingWeeks.length===13
   ?`13 weeks through ${rollingWeeks[rollingWeeks.length-1].date}`
-  :`${rollingWeeks.length} weeks through ${latestDate||"â€”"}; partial window (13 needed)`;
+  :`${rollingWeeks.length} weeks through ${latestDate||"-"}; partial window (13 needed)`;
  let latestWeek=allWeeks[allWeeks.length-1];
  $("wtd").textContent=f(latestWeek?pc(weekTotals(latestWeek).office,weekTotals(latestWeek).working):0);
  $("wtd-week").textContent=latestWeek?`Week ending ${latestWeek.date}`:"No weekly entry";
@@ -324,7 +324,7 @@ function renderPlans(yo,yw){
   b.insertAdjacentHTML("beforeend",`<tr><td>${i+1}</td><td><input type="number" min="0" max="7" value="${wd}"></td>
   <td><input type="number" min="0" max="${wd}" value="${h}"></td><td><b>${work}</b></td>
   <td><input type="number" min="0" max="${work}" value="${o}"></td><td><span class="pill">${f(pc(po,pw))}</span></td>
-  <td><button class="danger" onclick="plans.splice(${i},1);render();scheduleSave()">Ã—</button></td></tr>`);
+  <td><button class="danger" onclick="plans.splice(${i},1);render();scheduleSave()">x</button></td></tr>`);
   let tr=b.lastElementChild,ins=tr.querySelectorAll("input");
   ins[0].oninput=e=>{p.weekdays=+e.target.value;render();scheduleSave()};ins[1].oninput=e=>{p.holidays=+e.target.value;render();scheduleSave()};ins[2].oninput=e=>{p.office=+e.target.value;render();scheduleSave()};
  });

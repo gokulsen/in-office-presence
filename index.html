@@ -262,7 +262,7 @@ function render(){
    <td><input class="week-eligible" type="number" min="0" max="5" value="${totals.working}"></td>
    <td><span class="pill">${f(pc(totals.office,totals.working))}</span></td>
    <td class="num">${ytdOffice}</td><td class="num">${ytdEligible}</td><td><span class="pill">${calcYtd}</span></td>
-   ${metricCells}<td><button class="danger" data-delete-week="${w.date}" aria-label="Delete week ending ${w.date}">Ã—</button></td></tr>`);
+   ${metricCells}<td><button class="danger" data-delete-week="${w.date}" aria-label="Delete week ending ${w.date}">x</button></td></tr>`);
   let tr=body.lastElementChild;
   let officeInput=tr.querySelector(".week-office"),eligibleInput=tr.querySelector(".week-eligible");
   officeInput.onchange=e=>{
